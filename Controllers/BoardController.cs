@@ -1,0 +1,203 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using RefApp.Data;
+using RefApp.Models;
+using RefApp.ViewModels;
+
+namespace RefApp.Controllers;
+
+[Authorize(Roles = "Board")]
+public class BoardController : Controller
+{
+    private readonly ApplicationDbContext _context;
+
+    public BoardController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        var today = DateTime.UtcNow.Date;
+        var upcoming = await _context.Matches
+            .Where(m => m.MatchDate >= today)
+            .OrderBy(m => m.MatchDate)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+        ViewBag.PendingMatches = await _context.Matches.CountAsync(m => m.MatchDate >= today, cancellationToken);
+        ViewBag.UnavailableRefsCount = await _context.Unavailabilities
+            .Where(u => u.EndDate >= today)
+            .Select(u => u.RefereeId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+        ViewBag.UpcomingMatches = upcoming;
+        ViewBag.RecentUnavailabilities = await _context.Unavailabilities
+            .Include(u => u.Referee)
+            .Where(u => u.EndDate >= today)
+            .OrderBy(u => u.StartDate)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+        return View();
+    }
+
+    public async Task<IActionResult> UpcomingMatches(CancellationToken cancellationToken)
+    {
+        var today = DateTime.UtcNow.Date;
+        var matches = await _context.Matches
+            .Include(m => m.Assignments)
+            .ThenInclude(a => a.Referee)
+            .Where(m => m.MatchDate >= today)
+            .OrderBy(m => m.MatchDate)
+            .ToListAsync(cancellationToken);
+        return View(matches);
+    }
+
+    [HttpGet]
+    public IActionResult CreateMatch()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateMatch([FromForm] Match match, CancellationToken cancellationToken)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.Matches.Add(match);
+            await _context.SaveChangesAsync(cancellationToken);
+            TempData["Success"] = "Match created successfully.";
+            return RedirectToAction(nameof(UpcomingMatches));
+        }
+        return View(match);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Assign(int id, CancellationToken cancellationToken)
+    {
+        var match = await _context.Matches
+            .Include(m => m.Assignments)
+            .ThenInclude(a => a.Referee)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+        if (match == null)
+            return NotFound();
+
+        var referees = await _context.Users
+            .Where(u => _context.UserRoles.Any(ur =>
+                ur.UserId == u.Id &&
+                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Referee")))
+            .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
+            .ToListAsync(cancellationToken);
+
+        var matchDate = match.MatchDate.Date;
+        var unavailableRefereeIds = await _context.Unavailabilities
+            .Where(u => u.StartDate <= matchDate && u.EndDate >= matchDate)
+            .Select(u => u.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var eligible = referees
+            .Where(r => !unavailableRefereeIds.Contains(r.Id))
+            .Select(r => new RefereeOption
+            {
+                Id = r.Id,
+                DisplayName = r.DisplayName ?? r.Email ?? r.UserName ?? r.Id,
+                Email = r.Email ?? ""
+            })
+            .ToList();
+
+        var vm = new AssignRefereesViewModel
+        {
+            MatchId = match.Id,
+            HomeTeam = match.HomeTeam,
+            AwayTeam = match.AwayTeam,
+            MatchDate = match.MatchDate,
+            Location = match.Location,
+            EligibleReferees = eligible,
+            MainRefereeId = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Main)?.RefereeId,
+            Assistant1Id = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant1)?.RefereeId,
+            Assistant2Id = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant2)?.RefereeId
+        };
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Assign(int id, [FromForm] AssignRefereesViewModel model, CancellationToken cancellationToken)
+    {
+        var match = await _context.Matches
+            .Include(m => m.Assignments)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+        if (match == null)
+            return NotFound();
+
+        var mainId = model.MainRefereeId;
+        var asst1Id = model.Assistant1Id;
+        var asst2Id = model.Assistant2Id;
+
+        var ids = new[] { mainId, asst1Id, asst2Id }.Where(s => !string.IsNullOrEmpty(s)).ToList();
+        if (ids.Distinct().Count() != ids.Count)
+        {
+            ModelState.AddModelError("", "Each referee can only be assigned to one role per match.");
+            return await ReloadAssignView(match, model, cancellationToken);
+        }
+
+        _context.MatchAssignments.RemoveRange(match.Assignments);
+
+        if (!string.IsNullOrEmpty(mainId))
+            _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = mainId, RoleType = MatchRoleType.Main });
+        if (!string.IsNullOrEmpty(asst1Id))
+            _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = asst1Id, RoleType = MatchRoleType.Assistant1 });
+        if (!string.IsNullOrEmpty(asst2Id))
+            _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = asst2Id, RoleType = MatchRoleType.Assistant2 });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        TempData["Success"] = "Referees assigned successfully.";
+        return RedirectToAction(nameof(UpcomingMatches));
+    }
+
+    private async Task<IActionResult> ReloadAssignView(Match match, AssignRefereesViewModel model, CancellationToken cancellationToken)
+    {
+        var referees = await _context.Users
+            .Where(u => _context.UserRoles.Any(ur =>
+                ur.UserId == u.Id &&
+                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Referee")))
+            .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
+            .ToListAsync(cancellationToken);
+
+        var matchDate = match.MatchDate.Date;
+        var unavailableRefereeIds = await _context.Unavailabilities
+            .Where(u => u.StartDate <= matchDate && u.EndDate >= matchDate)
+            .Select(u => u.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        model.EligibleReferees = referees
+            .Where(r => !unavailableRefereeIds.Contains(r.Id))
+            .Select(r => new RefereeOption
+            {
+                Id = r.Id,
+                DisplayName = r.DisplayName ?? r.Email ?? r.UserName ?? r.Id,
+                Email = r.Email ?? ""
+            })
+            .ToList();
+        model.MatchId = match.Id;
+        model.HomeTeam = match.HomeTeam;
+        model.AwayTeam = match.AwayTeam;
+        model.MatchDate = match.MatchDate;
+        model.Location = match.Location;
+        return View(model);
+    }
+
+    public async Task<IActionResult> UnavailabilityRoster(CancellationToken cancellationToken)
+    {
+        var roster = await _context.Unavailabilities
+            .Include(u => u.Referee)
+            .OrderBy(u => u.Referee!.DisplayName ?? u.Referee.Email ?? u.Referee.UserName)
+            .ThenBy(u => u.StartDate)
+            .ToListAsync(cancellationToken);
+        return View(roster);
+    }
+}
