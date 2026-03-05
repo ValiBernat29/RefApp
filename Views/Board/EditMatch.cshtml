@@ -1,12 +1,13 @@
 @model RefApp.ViewModels.CreateMatchViewModel
 @{
-    ViewData["Title"] = "Create Match";
+    ViewData["Title"] = "Edit Match";
 }
 
 <main class="flex-1 p-4 pb-24 max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold tracking-tight mb-6">Create Match</h1>
+    <h1 class="text-2xl font-bold tracking-tight mb-6">Edit Match</h1>
 
-    <form asp-action="CreateMatch" method="post" class="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+    <form asp-action="EditMatch" method="post" class="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+        <input type="hidden" asp-for="Id" />
         <div asp-validation-summary="ModelOnly" class="text-red-600 dark:text-red-400 text-sm"></div>
 
         <div>
@@ -28,7 +29,7 @@
 
         <div>
             <label asp-for="Location" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"></label>
-            <input asp-for="Location" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g. Riverside Stadium" />
+            <input asp-for="Location" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent" />
             <span asp-validation-for="Location" class="text-red-600 dark:text-red-400 text-xs"></span>
         </div>
 
@@ -76,7 +77,7 @@
 
         <div class="flex gap-3 pt-2">
             <button type="submit" class="bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
-                Create Match
+                Save Changes
             </button>
             <a asp-action="UpcomingMatches" class="inline-flex items-center justify-center py-2.5 px-6 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
                 Cancel
@@ -112,3 +113,4 @@
         })();
     </script>
 }
+

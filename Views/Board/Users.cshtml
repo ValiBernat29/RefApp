@@ -1,0 +1,37 @@
+@using Microsoft.AspNetCore.Identity
+@using RefApp.Models
+@model IEnumerable<ApplicationUser>
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<h1>User Management</h1>
+
+<p>
+    <a class="btn btn-primary"
+       asp-area="Identity"
+       asp-page="/Account/Register">
+        Create New User
+    </a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Display Name</th>
+            <th>Roles</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@(user.Email ?? user.UserName)</td>
+                <td>@(user.DisplayName ?? "-")</td>
+                <td>@(ViewBag.UserRoles[user.Id] ?? "")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+

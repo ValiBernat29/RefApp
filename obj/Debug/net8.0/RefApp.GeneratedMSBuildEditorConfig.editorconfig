@@ -66,8 +66,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcQ3JlYXRlTWF0Y2guY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/CreateTeam.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcQ3JlYXRlVGVhbS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/EditMatch.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcRWRpdE1hdGNoLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/Teams.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcVGVhbXMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/UnavailabilityRoster.cshtml]
@@ -76,6 +88,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/UpcomingMatches.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcVXBjb21pbmdNYXRjaGVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/valib/Desktop/RefApp/RefApp/Views/Board/Users.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcVXNlcnMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/valib/Desktop/RefApp/RefApp/Views/Home/Error.cshtml]

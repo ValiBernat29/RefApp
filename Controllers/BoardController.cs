@@ -9,24 +9,26 @@ using RefApp.ViewModels;
 namespace RefApp.Controllers;
 
 [Authorize(Roles = "Board")]
-public class BoardController : Controller
-{
-    private readonly ApplicationDbContext _context;
-
-    public BoardController(ApplicationDbContext context)
+    public class BoardController : Controller
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _context;
+
+        public BoardController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var today = DateTime.UtcNow.Date;
+        var endOfWindow = today.AddDays(7);
         var upcoming = await _context.Matches
-            .Where(m => m.MatchDate >= today)
+            .Where(m => m.MatchDate >= today && m.MatchDate < endOfWindow)
             .OrderBy(m => m.MatchDate)
             .Take(5)
             .ToListAsync(cancellationToken);
-        ViewBag.PendingMatches = await _context.Matches.CountAsync(m => m.MatchDate >= today, cancellationToken);
+        ViewBag.PendingMatches = await _context.Matches
+            .CountAsync(m => m.MatchDate >= today && m.MatchDate < endOfWindow, cancellationToken);
         ViewBag.UnavailableRefsCount = await _context.Unavailabilities
             .Where(u => u.EndDate >= today)
             .Select(u => u.RefereeId)
@@ -42,6 +44,58 @@ public class BoardController : Controller
         return View();
     }
 
+    public async Task<IActionResult> Teams(CancellationToken cancellationToken)
+    {
+        var teams = await _context.Teams
+            .OrderBy(t => t.League)
+            .ThenBy(t => t.Name)
+            .ToListAsync(cancellationToken);
+        return View(teams);
+    }
+
+    [HttpGet]
+    public IActionResult CreateTeam()
+    {
+        return View(new Team { PreferredMatchDay = DayOfWeek.Sunday });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateTeam([FromForm] Team model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        _context.Teams.Add(model);
+        await _context.SaveChangesAsync(cancellationToken);
+        TempData["Success"] = "Team created successfully.";
+        return RedirectToAction(nameof(Teams));
+    }
+
+    public async Task<IActionResult> Users(CancellationToken cancellationToken)
+    {
+        var users = await _context.Users
+            .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
+            .ToListAsync(cancellationToken);
+
+        var userRolesLookup = await _context.UserRoles
+            .Join(_context.Roles,
+                ur => ur.RoleId,
+                r => r.Id,
+                (ur, r) => new { ur.UserId, r.Name })
+            .GroupBy(x => x.UserId)
+            .ToDictionaryAsync(
+                g => g.Key,
+                g => string.Join(", ", g.Select(x => x.Name)),
+                cancellationToken);
+
+        ViewBag.UserRoles = userRolesLookup;
+
+        return View(users);
+    }
+
     public async Task<IActionResult> UpcomingMatches(CancellationToken cancellationToken)
     {
         var today = DateTime.UtcNow.Date;
@@ -55,23 +109,170 @@ public class BoardController : Controller
     }
 
     [HttpGet]
-    public IActionResult CreateMatch()
+    public async Task<IActionResult> CreateMatch(CancellationToken cancellationToken)
     {
-        return View();
+        var teams = await _context.Teams
+            .OrderBy(t => t.League)
+            .ThenBy(t => t.Name)
+            .ToListAsync(cancellationToken);
+
+        var vm = new CreateMatchViewModel
+        {
+            MatchDate = DateTime.UtcNow,
+            League = null,
+            Teams = teams
+        };
+
+        return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateMatch([FromForm] Match match, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateMatch([FromForm] CreateMatchViewModel model, CancellationToken cancellationToken)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            _context.Matches.Add(match);
-            await _context.SaveChangesAsync(cancellationToken);
-            TempData["Success"] = "Match created successfully.";
-            return RedirectToAction(nameof(UpcomingMatches));
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
         }
-        return View(match);
+
+        if (model.HomeTeamId == model.AwayTeamId)
+        {
+            ModelState.AddModelError(string.Empty, "Home and away team must be different.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        var home = await _context.Teams.FindAsync(new object[] { model.HomeTeamId }, cancellationToken);
+        var away = await _context.Teams.FindAsync(new object[] { model.AwayTeamId }, cancellationToken);
+
+        if (home == null || away == null)
+        {
+            ModelState.AddModelError(string.Empty, "Selected teams could not be found.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        if (home.League != away.League)
+        {
+            ModelState.AddModelError(string.Empty, "Home and away team must be from the same league.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        var match = new Match
+        {
+            MatchDate = model.MatchDate,
+            Location = model.Location,
+            HomeTeam = home.Name,
+            AwayTeam = away.Name
+        };
+
+        _context.Matches.Add(match);
+        await _context.SaveChangesAsync(cancellationToken);
+        TempData["Success"] = "Match created successfully.";
+        return RedirectToAction(nameof(UpcomingMatches));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditMatch(int id, CancellationToken cancellationToken)
+    {
+        var match = await _context.Matches.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+        if (match == null)
+            return NotFound();
+
+        var teams = await _context.Teams
+            .OrderBy(t => t.League)
+            .ThenBy(t => t.Name)
+            .ToListAsync(cancellationToken);
+
+        var vm = new CreateMatchViewModel
+        {
+            Id = match.Id,
+            MatchDate = match.MatchDate,
+            Location = match.Location,
+            HomeTeamId = teams.FirstOrDefault(t => t.Name == match.HomeTeam)?.Id ?? 0,
+            AwayTeamId = teams.FirstOrDefault(t => t.Name == match.AwayTeam)?.Id ?? 0,
+            League = teams.FirstOrDefault(t => t.Name == match.HomeTeam)?.League,
+            Teams = teams
+        };
+
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditMatch(int id, [FromForm] CreateMatchViewModel model, CancellationToken cancellationToken)
+    {
+        if (id != model.Id)
+            return BadRequest();
+
+        var match = await _context.Matches.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+        if (match == null)
+            return NotFound();
+
+        if (!ModelState.IsValid)
+        {
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        if (model.HomeTeamId == model.AwayTeamId)
+        {
+            ModelState.AddModelError(string.Empty, "Home and away team must be different.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        var home = await _context.Teams.FindAsync(new object[] { model.HomeTeamId }, cancellationToken);
+        var away = await _context.Teams.FindAsync(new object[] { model.AwayTeamId }, cancellationToken);
+
+        if (home == null || away == null)
+        {
+            ModelState.AddModelError(string.Empty, "Selected teams could not be found.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        if (home.League != away.League)
+        {
+            ModelState.AddModelError(string.Empty, "Home and away team must be from the same league.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        match.MatchDate = model.MatchDate;
+        match.Location = model.Location;
+        match.HomeTeam = home.Name;
+        match.AwayTeam = away.Name;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        TempData["Success"] = "Match updated successfully.";
+        return RedirectToAction(nameof(UpcomingMatches));
     }
 
     [HttpGet]

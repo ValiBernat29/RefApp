@@ -11,6 +11,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    public DbSet<Team> Teams { get; set; } = default!;
+
     public DbSet<Match> Matches { get; set; } = default!;
 
     public DbSet<MatchAssignment> MatchAssignments { get; set; } = default!;

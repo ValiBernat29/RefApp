@@ -15,7 +15,9 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true;
+        // For development, allow login without confirmed email.
+        // Change back to true when you enable real email confirmation.
+        options.SignIn.RequireConfirmedAccount = false;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
