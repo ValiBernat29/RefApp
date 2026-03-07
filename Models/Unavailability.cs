@@ -9,7 +9,7 @@ public class Unavailability
 
     public string RefereeId { get; set; } = string.Empty;
 
-    public ApplicationUser Referee { get; set; } = null!;
+    public ApplicationUser? Referee { get; set; }
 
     [Required]
     [DataType(DataType.Date)]

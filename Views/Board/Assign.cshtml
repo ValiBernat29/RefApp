@@ -11,8 +11,34 @@
         <div asp-validation-summary="All" class="text-red-600 dark:text-red-400 text-sm"></div>
 
         @{
+            string BuildLabel(RefApp.ViewModels.RefereeOption r)
+            {
+                var label = r.DisplayName;
+                if (!string.IsNullOrEmpty(r.Email))
+                {
+                    label += " (" + r.Email + ")";
+                }
+
+                var badges = new List<string>();
+                if (r.IsUnavailable)
+                {
+                    badges.Add("❌ Unavailable");
+                }
+                if (r.HasOtherMatchThatDay)
+                {
+                    badges.Add("⚠ Already assigned");
+                }
+
+                if (badges.Count > 0)
+                {
+                    label += " - " + string.Join(", ", badges);
+                }
+
+                return label;
+            }
+
             var refereeItems = Model.EligibleReferees
-                .Select(r => new SelectListItem { Value = r.Id, Text = r.DisplayName + (string.IsNullOrEmpty(r.Email) ? "" : " (" + r.Email + ")") })
+                .Select(r => new SelectListItem { Value = r.Id, Text = BuildLabel(r) })
                 .ToList();
             refereeItems.Insert(0, new SelectListItem { Value = "", Text = "(None)" });
         }

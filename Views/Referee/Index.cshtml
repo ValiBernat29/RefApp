@@ -2,128 +2,34 @@
     ViewData["Title"] = "Referee Dashboard";
 }
 
-<main class="flex-1 pb-24">
-    <section class="p-4 pt-6">
-        <div class="bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/40 rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Manage Availability</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400">Keep your schedule up to date for better assignment matching.</p>
+<main class="flex-1 pb-24 p-4">
+    <h1 class="text-2xl font-bold tracking-tight mb-6">Welcome</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <a asp-controller="Referee" asp-action="MyMatches"
+           class="flex flex-col gap-2 rounded-xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">sports_soccer</span>
+                <h2 class="text-lg font-semibold">My Matches</h2>
             </div>
-            <a asp-controller="Referee" asp-action="MyAvailability" class="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
-                <span class="material-symbols-outlined text-sm">event_busy</span>
-                Update Unavailability
-            </a>
-        </div>
-    </section>
-    <section class="p-4">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold tracking-tight">My Upcoming Matches</h2>
-            <a class="text-primary dark:text-blue-400 text-sm font-medium" href="#">View Calendar</a>
-        </div>
-        <div class="space-y-4">
-            <div class="flex flex-col rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 @@container">
-                <div class="flex flex-col @@xl:flex-row">
-                    <div class="w-full @@xl:w-48 h-48 @@xl:h-auto bg-center bg-no-repeat bg-cover" data-alt="Close up of professional soccer stadium green turf" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBaXU1mM4Y5r8Nzj_QJEbxOvplmSthRJkvzpDrs7Ix4iFtB70DgBUyoNB3B-pU34oKPRs-amNE9nTZyu1wnb3aug3yuvdNH5MBfhkbmGKSxYIhXqFDcRuvvdeidpIxZMemr4Oha3cIfI-bD6JOYSnzlB92NfOaAVe-Xt801JE6Gp3my6DHyFMZhkYqffhjMtKjzOI035BuljXacGxkBTrkRObn7OgftT3KIY-pG9i-UpC9mMbAQKNlAKrfEErQjvMSSJ0X712UoLvw");'>
-                    </div>
-                    <div class="flex-1 p-4 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-blue-300">Finals • Division I</span>
-                                <span class="text-xs font-medium text-slate-500">ID: #M-99201</span>
-                            </div>
-                            <h3 class="text-lg font-bold leading-tight mb-3">Team Falcons vs. United Blue</h3>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm">
-                                    <span class="material-symbols-outlined text-base">calendar_today</span>
-                                    <span>Oct 25, 2023 • 3:00 PM</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm">
-                                    <span class="material-symbols-outlined text-base">location_on</span>
-                                    <span data-location="Olympic Stadium, Sector 4">Olympic Stadium, Sector 4</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex gap-2">
-                            <button class="flex-1 py-2 rounded-lg bg-primary text-white text-sm font-semibold">Match Details</button>
-                            <button class="flex items-center justify-center w-10 h-10 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
-                                <span class="material-symbols-outlined">map</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
-                <div class="flex-1">
-                    <div class="text-xs font-bold text-primary dark:text-blue-400 uppercase mb-1">Semi-Final</div>
-                    <h4 class="font-bold text-slate-900 dark:text-slate-100">Team Raptors vs. Team Volt</h4>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Oct 28, 2023 • 5:00 PM</p>
-                </div>
-                <div class="w-20 h-20 rounded-lg bg-center bg-cover bg-no-repeat shrink-0" data-alt="Blurred soccer player in stadium" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDEkoqB9I8T010jRpTKLgJ3yx8xOJN3amu9RSyscKexM3Kl0ZEDBNLCAYmXvpOmmoqz8tR7qJOg3dbWZoOdU0C6WQfVM9_91qoYBdAWP2wNQ9diJecfKpU0CY4s9_2YpwBDFtY1Xd2-E7F9hhfSKdI0boJ6lHTvRvB1zx5BwU8R8hGMXWwR6SGAo9QmKcPQt25OW0Yey_Hx2bXMaPuT9urf7UZIxkVSF25fWUTmwMy5X1QUSbJMyuyeAGBmJiq7ehhkVZS5Bh0zjf0");'>
-                </div>
-            </div>
-        </div>
-    </section>
-    <section class="p-4">
-        <h2 class="text-xl font-bold tracking-tight mb-4">Recent Past Matches</h2>
-        <div class="grid grid-cols-1 gap-3">
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/20 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-semibold">City Lions 2 - 1 Storm FC</p>
-                    <p class="text-xs text-slate-500">Oct 18, 2023 • Reported</p>
-                </div>
-                <span class="material-symbols-outlined text-green-500">check_circle</span>
-            </div>
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/20 flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-semibold">Red Dragons 0 - 0 White Hawks</p>
-                    <p class="text-xs text-slate-500">Oct 15, 2023 • Reported</p>
-                </div>
-                <span class="material-symbols-outlined text-green-500">check_circle</span>
-            </div>
-        </div>
-    </section>
-    <section class="p-4">
-        <div class="bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-            <h3 class="font-bold text-lg mb-4">Quick Date Selection</h3>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-slate-500 uppercase">From</label>
-                    <div class="relative">
-                        <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm py-2 px-3" type="text" value="2023-11-01" />
-                        <span class="material-symbols-outlined absolute right-2 top-2 text-sm text-slate-400">calendar_month</span>
-                    </div>
-                </div>
-                <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-slate-500 uppercase">To</label>
-                    <div class="relative">
-                        <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm py-2 px-3" type="text" value="2023-11-05" />
-                        <span class="material-symbols-outlined absolute right-2 top-2 text-sm text-slate-400">calendar_month</span>
-                    </div>
-                </div>
-            </div>
-            <button class="w-full bg-primary/20 hover:bg-primary/30 text-primary dark:text-blue-300 font-bold py-2 rounded-lg transition-colors border border-primary/10">
-                Confirm Unavailability
-            </button>
-        </div>
-    </section>
-</main>
-<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 pb-6 pt-2 z-20">
-    <div class="flex items-center justify-between max-w-lg mx-auto">
-        <a class="flex flex-1 flex-col items-center gap-1 text-primary dark:text-blue-400" asp-controller="Referee" asp-action="Index">
-            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-            <p class="text-[10px] font-bold">Dashboard</p>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+                See your upcoming and past matches.
+            </p>
         </a>
-        <a class="flex flex-1 flex-col items-center gap-1 text-slate-400" asp-controller="Referee" asp-action="MyMatches">
-            <span class="material-symbols-outlined">sports_soccer</span>
-            <p class="text-[10px] font-medium">Matches</p>
-        </a>
-        <a class="flex flex-1 flex-col items-center gap-1 text-slate-400" href="#">
-            <span class="material-symbols-outlined">account_circle</span>
-            <p class="text-[10px] font-medium">Profile</p>
-        </a>
-        <a class="flex flex-1 flex-col items-center gap-1 text-slate-400" href="#">
-            <span class="material-symbols-outlined">settings</span>
-            <p class="text-[10px] font-medium">Settings</p>
+
+        <a asp-controller="Referee" asp-action="MyAvailability"
+           class="flex flex-col gap-2 rounded-xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-500">event_busy</span>
+                <h2 class="text-lg font-semibold">My Unavailability</h2>
+            </div>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+                Block dates when you cannot referee.
+            </p>
         </a>
     </div>
-</nav>
+
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+        Tip: keep your unavailability up to date so the board can assign you to the right matches.
+    </p>
+</main>

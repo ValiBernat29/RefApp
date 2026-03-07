@@ -65,7 +65,12 @@ public class RefereeController : Controller
     [HttpGet]
     public IActionResult CreateUnavailability()
     {
-        return View(new Unavailability());
+        var today = DateTime.Today;
+        return View(new Unavailability
+        {
+            StartDate = today,
+            EndDate = today
+        });
     }
 
     [HttpPost]
@@ -78,6 +83,18 @@ public class RefereeController : Controller
         if (model.EndDate < model.StartDate)
         {
             ModelState.AddModelError("EndDate", "End date must be on or after start date.");
+        }
+
+        var hasOverlap = await _context.Unavailabilities
+            .AnyAsync(u =>
+                u.RefereeId == refereeId &&
+                u.StartDate <= model.EndDate &&
+                u.EndDate >= model.StartDate,
+                cancellationToken);
+
+        if (hasOverlap)
+        {
+            ModelState.AddModelError(string.Empty, "This period overlaps an existing unavailability.");
         }
 
         if (ModelState.IsValid)
@@ -112,6 +129,19 @@ public class RefereeController : Controller
 
         if (model.EndDate < model.StartDate)
             ModelState.AddModelError("EndDate", "End date must be on or after start date.");
+
+        var hasOverlap = await _context.Unavailabilities
+            .AnyAsync(u =>
+                u.RefereeId == refereeId &&
+                u.Id != id &&
+                u.StartDate <= model.EndDate &&
+                u.EndDate >= model.StartDate,
+                cancellationToken);
+
+        if (hasOverlap)
+        {
+            ModelState.AddModelError(string.Empty, "This period overlaps an existing unavailability.");
+        }
 
         var item = await _context.Unavailabilities.FirstOrDefaultAsync(u => u.Id == id && u.RefereeId == refereeId, cancellationToken);
         if (item == null) return NotFound();

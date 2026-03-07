@@ -27,6 +27,7 @@ namespace RefApp.Controllers;
             .OrderBy(m => m.MatchDate)
             .Take(5)
             .ToListAsync(cancellationToken);
+
         ViewBag.PendingMatches = await _context.Matches
             .CountAsync(m => m.MatchDate >= today && m.MatchDate < endOfWindow, cancellationToken);
         ViewBag.UnavailableRefsCount = await _context.Unavailabilities
@@ -34,7 +35,22 @@ namespace RefApp.Controllers;
             .Select(u => u.RefereeId)
             .Distinct()
             .CountAsync(cancellationToken);
-        ViewBag.UpcomingMatches = upcoming;
+
+        var matchesNeedingAssignments = await _context.Matches
+            .Where(m => m.MatchDate >= today)
+            .Where(m =>
+                !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Main) ||
+                !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant1) ||
+                !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant2))
+            .CountAsync(cancellationToken);
+        ViewBag.MatchesNeedingAssignments = matchesNeedingAssignments;
+
+        ViewBag.UpcomingMatches = upcoming
+            .Where(m =>
+                !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Main) ||
+                !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant1) ||
+                !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant2))
+            .ToList();
         ViewBag.RecentUnavailabilities = await _context.Unavailabilities
             .Include(u => u.Referee)
             .Where(u => u.EndDate >= today)
@@ -285,6 +301,7 @@ namespace RefApp.Controllers;
         if (match == null)
             return NotFound();
 
+        var matchDate = match.MatchDate.Date;
         var referees = await _context.Users
             .Where(u => _context.UserRoles.Any(ur =>
                 ur.UserId == u.Id &&
@@ -292,20 +309,27 @@ namespace RefApp.Controllers;
             .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
             .ToListAsync(cancellationToken);
 
-        var matchDate = match.MatchDate.Date;
         var unavailableRefereeIds = await _context.Unavailabilities
             .Where(u => u.StartDate <= matchDate && u.EndDate >= matchDate)
             .Select(u => u.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
+        var otherMatchRefIds = await _context.MatchAssignments
+            .Include(a => a.Match)
+            .Where(a => a.MatchId != match.Id && a.Match!.MatchDate.Date == matchDate)
+            .Select(a => a.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
         var eligible = referees
-            .Where(r => !unavailableRefereeIds.Contains(r.Id))
             .Select(r => new RefereeOption
             {
                 Id = r.Id,
                 DisplayName = r.DisplayName ?? r.Email ?? r.UserName ?? r.Id,
-                Email = r.Email ?? ""
+                Email = r.Email ?? "",
+                IsUnavailable = unavailableRefereeIds.Contains(r.Id),
+                HasOtherMatchThatDay = otherMatchRefIds.Contains(r.Id)
             })
             .ToList();
 

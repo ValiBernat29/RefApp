@@ -20,4 +20,7 @@ public class RefereeOption
     public string Id { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+
+    public bool IsUnavailable { get; set; }
+    public bool HasOtherMatchThatDay { get; set; }
 }

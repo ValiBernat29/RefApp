@@ -242,6 +242,7 @@ C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.MvcApplicationParts
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.RazorAssemblyInfo.cache
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.RazorAssemblyInfo.cs
+C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.sourcelink.json
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json

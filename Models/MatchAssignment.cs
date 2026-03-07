@@ -10,7 +10,7 @@ public class MatchAssignment
 
     public string RefereeId { get; set; } = string.Empty;
 
-    public ApplicationUser Referee { get; set; } = null!;
+    public ApplicationUser? Referee { get; set; }
 
     public MatchRoleType RoleType { get; set; }
 }

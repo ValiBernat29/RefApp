@@ -40,14 +40,9 @@
                 <option value="">Select home team</option>
                 @if (Model.Teams != null)
                 {
-                    foreach (var group in Model.Teams.GroupBy(t => t.League))
+                    foreach (var t in Model.Teams.OrderBy(t => t.Name))
                     {
-                        <optgroup label="@group.Key">
-                            @foreach (var t in group.OrderBy(t => t.Name))
-                            {
-                                <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
-                            }
-                        </optgroup>
+                        <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
                     }
                 }
             </select>
@@ -61,14 +56,9 @@
                 <option value="">Select away team</option>
                 @if (Model.Teams != null)
                 {
-                    foreach (var group in Model.Teams.GroupBy(t => t.League))
+                    foreach (var t in Model.Teams.OrderBy(t => t.Name))
                     {
-                        <optgroup label="@group.Key">
-                            @foreach (var t in group.OrderBy(t => t.Name))
-                            {
-                                <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
-                            }
-                        </optgroup>
+                        <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
                     }
                 }
             </select>
