@@ -13,7 +13,9 @@ public class HomeController : Controller
             if (User.IsInRole("Board")) return RedirectToAction("Index", "Board");
             if (User.IsInRole("Referee")) return RedirectToAction("Index", "Referee");
         }
-        return View();
+
+        // Send them straight to the official Identity Login page we just fixed!
+        return LocalRedirect("/Identity/Account/Login");
     }
 
     [AllowAnonymous]

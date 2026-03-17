@@ -5,18 +5,21 @@ using Microsoft.EntityFrameworkCore;
 using RefApp.Data;
 using RefApp.Models;
 using RefApp.ViewModels;
+using Microsoft.AspNetCore.Identity;
 
 namespace RefApp.Controllers;
 
 [Authorize(Roles = "Board")]
-    public class BoardController : Controller
-    {
-        private readonly ApplicationDbContext _context;
+public class BoardController : Controller
+{
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-        public BoardController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+    public BoardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    {
+        _context = context;
+        _userManager = userManager;
+    }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
@@ -92,8 +95,9 @@ namespace RefApp.Controllers;
 
     public async Task<IActionResult> Users(CancellationToken cancellationToken)
     {
+        // Prioritize UserName over Email for sorting
         var users = await _context.Users
-            .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
+            .OrderBy(u => u.DisplayName ?? u.UserName ?? u.Email ?? "")
             .ToListAsync(cancellationToken);
 
         var userRolesLookup = await _context.UserRoles
@@ -112,15 +116,48 @@ namespace RefApp.Controllers;
         return View(users);
     }
 
-    public async Task<IActionResult> UpcomingMatches(CancellationToken cancellationToken)
+    [HttpGet]
+    public async Task<IActionResult> UpcomingMatches(string? league, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
     {
         var today = DateTime.UtcNow.Date;
-        var matches = await _context.Matches
+
+        // Dacă nu s-au selectat date manual, punem default pe următoarele 7 zile (săptămâna curentă)
+        var filterStartDate = startDate ?? today;
+        var filterEndDate = endDate ?? today.AddDays(7);
+
+        var query = _context.Matches
             .Include(m => m.Assignments)
             .ThenInclude(a => a.Referee)
-            .Where(m => m.MatchDate >= today)
-            .OrderBy(m => m.MatchDate)
-            .ToListAsync(cancellationToken);
+            .AsQueryable();
+
+        // 1. Filtrarea după dată
+        // Adăugăm o zi la EndDate pentru a include meciurile jucate până la ora 23:59 în acea zi
+        var endOfDay = filterEndDate.Date.AddDays(1).AddTicks(-1);
+        query = query.Where(m => m.MatchDate >= filterStartDate.Date && m.MatchDate <= endOfDay);
+
+        // 2. Filtrarea după Ligă
+        if (!string.IsNullOrEmpty(league))
+        {
+            if (Enum.TryParse<RefApp.Models.League>(league, out var leagueEnum))
+            {
+                // Căutăm toate echipele din liga selectată
+                var teamsInLeague = await _context.Teams
+                    .Where(t => t.League == leagueEnum)
+                    .Select(t => t.Name)
+                    .ToListAsync(cancellationToken);
+
+                // Afișăm doar meciurile unde echipa gazdă face parte din acea ligă
+                query = query.Where(m => teamsInLeague.Contains(m.HomeTeam));
+            }
+        }
+
+        var matches = await query.OrderBy(m => m.MatchDate).ToListAsync(cancellationToken);
+
+        // Salvăm filtrele curente în ViewBag ca să le putem afișa înapoi în interfață (să nu se reseteze vizual)
+        ViewBag.StartDate = filterStartDate.ToString("yyyy-MM-dd");
+        ViewBag.EndDate = filterEndDate.ToString("yyyy-MM-dd");
+        ViewBag.SelectedLeague = league;
+
         return View(matches);
     }
 
@@ -134,7 +171,7 @@ namespace RefApp.Controllers;
 
         var vm = new CreateMatchViewModel
         {
-            MatchDate = DateTime.UtcNow,
+            MatchDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, DateTime.UtcNow.Minute, 0),
             League = null,
             Teams = teams
         };
@@ -306,7 +343,7 @@ namespace RefApp.Controllers;
             .Where(u => _context.UserRoles.Any(ur =>
                 ur.UserId == u.Id &&
                 _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Referee")))
-            .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
+            .OrderBy(u => u.DisplayName ?? u.UserName ?? u.Email ?? "")
             .ToListAsync(cancellationToken);
 
         var unavailableRefereeIds = await _context.Unavailabilities
@@ -322,13 +359,14 @@ namespace RefApp.Controllers;
             .Distinct()
             .ToListAsync(cancellationToken);
 
+        // We removed the filter here so EVERYONE shows up!
         var eligible = referees
             .Select(r => new RefereeOption
             {
                 Id = r.Id,
-                DisplayName = r.DisplayName ?? r.Email ?? r.UserName ?? r.Id,
+                DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
                 Email = r.Email ?? "",
-                IsUnavailable = unavailableRefereeIds.Contains(r.Id),
+                IsUnavailable = unavailableRefereeIds.Contains(r.Id), // This flags them for the JS script
                 HasOtherMatchThatDay = otherMatchRefIds.Contains(r.Id)
             })
             .ToList();
@@ -389,7 +427,7 @@ namespace RefApp.Controllers;
             .Where(u => _context.UserRoles.Any(ur =>
                 ur.UserId == u.Id &&
                 _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Referee")))
-            .OrderBy(u => u.DisplayName ?? u.Email ?? u.UserName ?? "")
+            .OrderBy(u => u.DisplayName ?? u.UserName ?? u.Email ?? "")
             .ToListAsync(cancellationToken);
 
         var matchDate = match.MatchDate.Date;
@@ -400,14 +438,15 @@ namespace RefApp.Controllers;
             .ToListAsync(cancellationToken);
 
         model.EligibleReferees = referees
-            .Where(r => !unavailableRefereeIds.Contains(r.Id))
             .Select(r => new RefereeOption
             {
                 Id = r.Id,
-                DisplayName = r.DisplayName ?? r.Email ?? r.UserName ?? r.Id,
-                Email = r.Email ?? ""
+                DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
+                Email = r.Email ?? "",
+                IsUnavailable = unavailableRefereeIds.Contains(r.Id) // Flags them for the JS script
             })
             .ToList();
+
         model.MatchId = match.Id;
         model.HomeTeam = match.HomeTeam;
         model.AwayTeam = match.AwayTeam;
@@ -420,9 +459,192 @@ namespace RefApp.Controllers;
     {
         var roster = await _context.Unavailabilities
             .Include(u => u.Referee)
-            .OrderBy(u => u.Referee!.DisplayName ?? u.Referee.Email ?? u.Referee.UserName)
+            // Prioritize UserName for sorting the roster
+            .OrderBy(u => u.Referee!.DisplayName ?? u.Referee.UserName ?? u.Referee.Email)
             .ThenBy(u => u.StartDate)
             .ToListAsync(cancellationToken);
         return View(roster);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> EditUser(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var userRole = roles.FirstOrDefault() ?? "Referee";
+
+        var vm = new EditUserViewModel
+        {
+            Id = user.Id,
+            UserName = user.UserName ?? "",
+            DisplayName = user.DisplayName,
+            Role = userRole
+        };
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditUser(string id, EditUserViewModel model)
+    {
+        if (id != model.Id) return BadRequest();
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        if (user.UserName != model.UserName)
+        {
+            var nameResult = await _userManager.SetUserNameAsync(user, model.UserName);
+            if (!nameResult.Succeeded)
+            {
+                foreach (var error in nameResult.Errors) ModelState.AddModelError(string.Empty, error.Description);
+                return View(model);
+            }
+
+            var safeName = model.UserName ?? "user";
+            var dummyEmail = $"{safeName.Replace(" ", "")}@refapp.local";
+            await _userManager.SetEmailAsync(user, dummyEmail);
+        }
+
+        user.DisplayName = model.DisplayName ?? string.Empty;
+        await _userManager.UpdateAsync(user);
+
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        var newRole = model.Role ?? "Referee";
+
+        if (!currentRoles.Contains(newRole))
+        {
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            await _userManager.AddToRoleAsync(user, newRole);
+        }
+
+        if (!string.IsNullOrEmpty(model.NewPassword))
+        {
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var passResult = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
+            if (!passResult.Succeeded)
+            {
+                foreach (var error in passResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+        }
+
+        TempData["Success"] = "Account updated successfully.";
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        // Safety check: Don't let the admin delete themselves!
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser?.Id == id)
+        {
+            TempData["Error"] = "You cannot delete your own account.";
+            return RedirectToAction(nameof(Users));
+        }
+
+
+        var userAssignments = await _context.MatchAssignments
+            .Where(a => a.RefereeId == id)
+            .ToListAsync();
+        _context.MatchAssignments.RemoveRange(userAssignments);
+
+        var userUnavailabilities = await _context.Unavailabilities
+            .Where(u => u.RefereeId == id)
+            .ToListAsync();
+        _context.Unavailabilities.RemoveRange(userUnavailabilities);
+
+        await _context.SaveChangesAsync();
+
+        var result = await _userManager.DeleteAsync(user);
+        if (result.Succeeded)
+        {
+            TempData["Success"] = "Account and all associated records deleted successfully.";
+        }
+        else
+        {
+            TempData["Error"] = "There was an error deleting this account.";
+        }
+
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditTeam(int id, CancellationToken cancellationToken)
+    {
+        var team = await _context.Teams.FindAsync(new object[] { id }, cancellationToken);
+        if (team == null) return NotFound();
+
+        return View(team);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditTeam(int id, [FromForm] Team model, CancellationToken cancellationToken)
+    {
+        if (id != model.Id) return BadRequest();
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var team = await _context.Teams.FindAsync(new object[] { id }, cancellationToken);
+        if (team == null) return NotFound();
+
+        // Actualizăm proprietățile
+        team.Name = model.Name ?? "";
+        team.League = model.League;
+        team.PreferredMatchDay = model.PreferredMatchDay;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        TempData["Success"] = "Team updated successfully.";
+        return RedirectToAction(nameof(Teams));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteTeam(int id, CancellationToken cancellationToken)
+    {
+        var team = await _context.Teams.FindAsync(new object[] { id }, cancellationToken);
+        if (team == null) return NotFound();
+
+
+        var teamMatches = await _context.Matches
+            .Where(m => m.HomeTeam == team.Name || m.AwayTeam == team.Name)
+            .ToListAsync(cancellationToken);
+
+        var matchIds = teamMatches.Select(m => m.Id).ToList();
+
+        if (matchIds.Any())
+        {
+            var relatedAssignments = await _context.MatchAssignments
+                .Where(a => matchIds.Contains(a.MatchId))
+                .ToListAsync(cancellationToken);
+
+            _context.MatchAssignments.RemoveRange(relatedAssignments);
+        }
+
+        _context.Matches.RemoveRange(teamMatches);
+
+        _context.Teams.Remove(team);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        TempData["Success"] = $"Team {team.Name} and all associated matches were deleted successfully.";
+        return RedirectToAction(nameof(Teams));
+    }
+
 }

@@ -7,6 +7,7 @@ public enum League
     L6,
     L5A,
     L5B,
+    L5C,
     L4
 }
 

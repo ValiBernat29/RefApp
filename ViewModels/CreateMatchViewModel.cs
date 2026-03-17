@@ -27,6 +27,10 @@ public class CreateMatchViewModel
     [Display(Name = "Away Team")]
     public int AwayTeamId { get; set; }
 
+    [Required]
+    [Display(Name = "Match Date & Time")]
+    [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
+    public DateTime MatchTime { get; set; }
     public IEnumerable<Team>? Teams { get; set; }
 }
 

@@ -5,29 +5,21 @@
 
 <main class="flex-1 p-4 pb-24 max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold tracking-tight mb-2">Assign Referees</h1>
-    <p class="text-slate-600 dark:text-slate-400 mb-6">@Model.HomeTeam vs @Model.AwayTeam — @Model.MatchDate.ToString("yyyy-MM-dd HH:mm") at @Model.Location</p>
+    <p class="text-slate-600 dark:text-slate-400 mb-6">@Model.HomeTeam vs @Model.AwayTeam —
+        @Model.MatchDate.ToString("yyyy-MM-dd HH:mm") at @Model.Location</p>
 
-    <form asp-action="Assign" asp-route-id="@Model.MatchId" method="post" class="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+    <form id="assignForm" asp-action="Assign" asp-route-id="@Model.MatchId" method="post"
+        class="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
         <div asp-validation-summary="All" class="text-red-600 dark:text-red-400 text-sm"></div>
 
         @{
             string BuildLabel(RefApp.ViewModels.RefereeOption r)
             {
                 var label = r.DisplayName;
-                if (!string.IsNullOrEmpty(r.Email))
-                {
-                    label += " (" + r.Email + ")";
-                }
-
                 var badges = new List<string>();
-                if (r.IsUnavailable)
-                {
-                    badges.Add("❌ Unavailable");
-                }
-                if (r.HasOtherMatchThatDay)
-                {
-                    badges.Add("⚠ Already assigned");
-                }
+
+                if (r.IsUnavailable) badges.Add("❌ Unavailable");
+                if (r.HasOtherMatchThatDay) badges.Add("⚠ Already assigned");
 
                 if (badges.Count > 0)
                 {
@@ -36,40 +28,82 @@
 
                 return label;
             }
-
-            var refereeItems = Model.EligibleReferees
-                .Select(r => new SelectListItem { Value = r.Id, Text = BuildLabel(r) })
-                .ToList();
-            refereeItems.Insert(0, new SelectListItem { Value = "", Text = "(None)" });
         }
 
         <div>
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Main Referee</label>
-            <select asp-for="MainRefereeId" asp-items="refereeItems" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent"></select>
+            <select asp-for="MainRefereeId"
+                class="ref-select w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+                <option value="">(None)</option>
+                @foreach (var r in Model.EligibleReferees)
+                {
+                    <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")">@BuildLabel(r)</option>
+                }
+            </select>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assistant 1</label>
-            <select asp-for="Assistant1Id" asp-items="refereeItems" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent"></select>
+            <select asp-for="Assistant1Id"
+                class="ref-select w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+                <option value="">(None)</option>
+                @foreach (var r in Model.EligibleReferees)
+                {
+                    <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")">@BuildLabel(r)</option>
+                }
+            </select>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assistant 2</label>
-            <select asp-for="Assistant2Id" asp-items="refereeItems" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent"></select>
+            <select asp-for="Assistant2Id"
+                class="ref-select w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+                <option value="">(None)</option>
+                @foreach (var r in Model.EligibleReferees)
+                {
+                    <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")">@BuildLabel(r)</option>
+                }
+            </select>
         </div>
 
-        @if (!Model.EligibleReferees.Any())
-        {
-            <p class="text-amber-600 dark:text-amber-400 text-sm">No referees are available for this date (all may be marked unavailable).</p>
-        }
-
         <div class="flex gap-3 pt-2">
-            <button type="submit" class="bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
+            <button type="submit"
+                class="bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
                 Save Assignments
             </button>
-            <a asp-action="UpcomingMatches" class="inline-flex items-center justify-center py-2.5 px-6 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
+            <a asp-action="UpcomingMatches"
+                class="inline-flex items-center justify-center py-2.5 px-6 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
                 Back to Matches
             </a>
         </div>
     </form>
 </main>
+
+@section Scripts {
+    <script>
+        document.getElementById('assignForm').addEventListener('submit', function (e) {
+            let hasUnavailableRef = false;
+
+            // Get all our select dropdowns
+            const selects = document.querySelectorAll('.ref-select');
+
+            selects.forEach(select => {
+                if (select.selectedIndex > 0) { // If an option other than (None) is chosen
+                    const selectedOption = select.options[select.selectedIndex];
+                    // Check if we attached our custom 'true' data attribute to it
+                    if (selectedOption.getAttribute('data-unavailable') === 'true') {
+                        hasUnavailableRef = true;
+                    }
+                }
+            });
+
+            // If an unavailable ref was selected, trigger the warning
+            if (hasUnavailableRef) {
+                const confirmed = confirm("Warning: One or more selected referees are marked as UNAVAILABLE for this date.\n\nAre you sure you want to assign them anyway?");
+                if (!confirmed) {
+                    e.preventDefault(); // This stops the form from submitting if they click Cancel
+                }
+            }
+        });
+    </script>
+}

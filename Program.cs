@@ -15,9 +15,9 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options =>
     {
-        // For development, allow login without confirmed email.
-        // Change back to true when you enable real email confirmation.
-        options.SignIn.RequireConfirmedAccount = false;
+        options.SignIn.RequireConfirmedAccount = false; // Set to true only if you plan to confirm accounts
+        options.User.RequireUniqueEmail = false;
+        //options.SignIn.RequireConfirmedAccount = false;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -57,5 +57,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
+
+
 
 app.Run();

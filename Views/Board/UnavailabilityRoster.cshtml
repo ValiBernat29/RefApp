@@ -6,7 +6,8 @@
 <main class="flex-1 p-4 pb-24">
     <h1 class="text-2xl font-bold tracking-tight mb-6">Unavailability Roster</h1>
 
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+    <div
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
         @if (!Model.Any())
         {
             <div class="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -20,16 +21,24 @@
                 <table class="w-full text-left">
                     <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Referee</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Start Date</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">End Date</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Reason</th>
+                            <th
+                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Referee</th>
+                            <th
+                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Start Date</th>
+                            <th
+                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                End Date</th>
+                            <th
+                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Reason</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                         @foreach (var u in Model)
                         {
-                            var name = u.Referee?.DisplayName ?? u.Referee?.Email ?? u.Referee?.UserName ?? u.RefereeId;
+                            var name = u.Referee?.UserName ?? u.Referee?.Email ?? u.RefereeId;
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                                 <td class="px-4 py-3 font-medium">@name</td>
                                 <td class="px-4 py-3 text-sm">@u.StartDate.ToString("yyyy-MM-dd")</td>
