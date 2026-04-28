@@ -1,108 +1,47 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
-
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - RefApp</title>
-
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
-
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#1a2b3d",
-                        "accent-green": "#22c55e",
-                        "background-light": "#f6f7f7",
-                        "background-dark": "#15191d",
-                    },
-                    fontFamily: {
-                        "display": ["Inter", "sans-serif"]
-                    },
-                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
-                },
-            },
-        }
-    </script>
-    <style>
-        body {
-            min-height: max(884px, 100dvh);
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-
-<body
-    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
-    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
-        <header
-            class="flex items-center bg-background-light dark:bg-background-dark p-4 justify-between border-b border-primary/10 dark:border-slate-800">
-            <div class="flex items-center gap-2">
-                <span
-                    class="material-symbols-outlined text-primary dark:text-slate-100 text-[28px]">shield_person</span>
-                <a asp-controller="Home" asp-action="Index"
-                    class="text-slate-900 dark:text-slate-100 text-lg font-bold tracking-tight">Referee Portal</a>
-            </div>
-            <div class="flex items-center gap-4">
-                <nav class="hidden md:flex items-center gap-4 text-sm font-medium">
-                    <a asp-controller="Home" asp-action="Index"
-                        class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">Home</a>
-                    @if (User.IsInRole("Board"))
-                    {
-                        <a asp-controller="Board" asp-action="UpcomingMatches"
-                            class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">Upcoming
-                            Matches</a>
-                        <a asp-controller="Board" asp-action="Index"
-                            class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">Assign
-                            Referees</a>
-                        <a asp-controller="Board" asp-action="UnavailabilityRoster"
-                            class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">Unavailability
-                            Roster</a>
-                    }
-                    else if (User.IsInRole("Referee"))
-                    {
-                        <a asp-controller="Referee" asp-action="Index"
-                            class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">Dashboard</a>
-                        <a asp-controller="Referee" asp-action="MyMatches"
-                            class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">My
-                            Matches</a>
-                        <a asp-controller="Referee" asp-action="MyAvailability"
-                            class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white">My
-                            Availability</a>
-                    }
-                </nav>
-                <div class="hidden md:block">
-                    <partial name="_LoginPartial" />
-                </div>
-                <button
-                    class="md:hidden flex items-center justify-center size-9 rounded-full bg-background-light dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                    type="button">
-                    <span class="material-symbols-outlined">menu</span>
-                </button>
-            </div>
-        </header>
-
-        @RenderBody()
-
-        <footer
-            class="p-6 bg-background-light dark:bg-background-dark border-t border-primary/5 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 mt-auto">
-            <div class="text-slate-500 dark:text-slate-500 text-xs">
-                © @DateTime.UtcNow.Year Sports Officiating Management System. Secure v4.2
-            </div>
-            <div class="flex gap-6 text-xs text-slate-500 dark:text-slate-500">
-                <a href="#" class="hover:text-primary transition-colors">Security Policy</a>
-                <a href="#" class="hover:text-primary transition-colors">Privacy</a>
-                <a href="#" class="hover:text-primary transition-colors">Terms of Use</a>
-            </div>
-        </footer>
-    </div>
-
+<body>
+    @{
+        var controller = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "").ToLowerInvariant();
+        var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? "").ToLowerInvariant();
+    }
+    <nav class="top-nav">
+        <a asp-controller="Home" asp-action="Index" class="nav-brand">
+            <span class="brand-dot"></span>
+            Referee Portal
+        </a>
+        <ul class="nav-links">
+            @if (User.IsInRole("Board"))
+            {
+                <li><a asp-controller="Board" asp-action="Index" class="@(controller == "board" && action == "index" ? "active" : "")">Home</a></li>
+                <li><a asp-controller="Board" asp-action="UpcomingMatches" class="@(controller == "board" && (action == "upcomingmatches" || action == "assign") ? "active" : "")">Upcoming Matches</a></li>
+                <li><a asp-controller="Board" asp-action="UnavailabilityRoster" class="@(controller == "board" && action == "unavailabilityroster" ? "active" : "")">Unavailability Roster</a></li>
+                <li><a asp-controller="Board" asp-action="Users" class="@(controller == "board" && action == "users" ? "active" : "")">Users</a></li>
+                <li><a asp-controller="Board" asp-action="Teams" class="@(controller == "board" && action == "teams" ? "active" : "")">Teams</a></li>
+            }
+            else if (User.IsInRole("Referee"))
+            {
+                <li><a asp-controller="Referee" asp-action="Index" class="@(controller == "referee" && action == "index" ? "active" : "")">Dashboard</a></li>
+                <li><a asp-controller="Referee" asp-action="MyMatches" class="@(controller == "referee" && action == "mymatches" ? "active" : "")">My Matches</a></li>
+                <li><a asp-controller="Referee" asp-action="MyAvailability" class="@(controller == "referee" && action == "myavailability" ? "active" : "")">My Availability</a></li>
+            }
+            else
+            {
+                <li><a asp-controller="Home" asp-action="Index" class="@(controller == "home" ? "active" : "")">Home</a></li>
+            }
+        </ul>
+        <div class="nav-right">
+            <partial name="_LoginPartial" />
+        </div>
+    </nav>
+    @RenderBody()
     @RenderSection("Scripts", required: false)
 </body>
-
 </html>

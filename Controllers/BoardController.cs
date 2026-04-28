@@ -21,9 +21,19 @@ public class BoardController : Controller
         _userManager = userManager;
     }
 
+    private async Task DeleteExpiredUnavailabilitiesAsync(DateTime todayUtcDate, CancellationToken cancellationToken)
+    {
+        // Keep the DB clean: expired = end date before today.
+        await _context.Unavailabilities
+            .Where(u => u.EndDate < todayUtcDate)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var today = DateTime.UtcNow.Date;
+        await DeleteExpiredUnavailabilitiesAsync(today, cancellationToken);
+
         var endOfWindow = today.AddDays(7);
         var upcoming = await _context.Matches
             .Where(m => m.MatchDate >= today && m.MatchDate < endOfWindow)
@@ -33,14 +43,9 @@ public class BoardController : Controller
 
         ViewBag.PendingMatches = await _context.Matches
             .CountAsync(m => m.MatchDate >= today && m.MatchDate < endOfWindow, cancellationToken);
-        ViewBag.UnavailableRefsCount = await _context.Unavailabilities
-            .Where(u => u.EndDate >= today)
-            .Select(u => u.RefereeId)
-            .Distinct()
-            .CountAsync(cancellationToken);
 
         var matchesNeedingAssignments = await _context.Matches
-            .Where(m => m.MatchDate >= today)
+            .Where(m => m.MatchDate >= today && m.MatchDate < endOfWindow)
             .Where(m =>
                 !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Main) ||
                 !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant1) ||
@@ -48,12 +53,15 @@ public class BoardController : Controller
             .CountAsync(cancellationToken);
         ViewBag.MatchesNeedingAssignments = matchesNeedingAssignments;
 
-        ViewBag.UpcomingMatches = upcoming
+        ViewBag.UpcomingMatches = await _context.Matches
+            .Where(m => m.MatchDate >= today && m.MatchDate < endOfWindow)
             .Where(m =>
                 !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Main) ||
                 !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant1) ||
                 !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Assistant2))
-            .ToList();
+            .OrderBy(m => m.MatchDate)
+            .Take(5)
+            .ToListAsync(cancellationToken);
         ViewBag.RecentUnavailabilities = await _context.Unavailabilities
             .Include(u => u.Referee)
             .Where(u => u.EndDate >= today)
@@ -225,6 +233,23 @@ public class BoardController : Controller
             return View(model);
         }
 
+        var matchDate = model.MatchDate.Date;
+        var hasTeamConflict = await _context.Matches
+            .AnyAsync(m =>
+                m.MatchDate.Date == matchDate &&
+                (m.HomeTeam == home.Name || m.AwayTeam == home.Name || m.HomeTeam == away.Name || m.AwayTeam == away.Name),
+                cancellationToken);
+
+        if (hasTeamConflict)
+        {
+            ModelState.AddModelError(string.Empty, "One of the selected teams already has a match on this date.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
         var match = new Match
         {
             MatchDate = model.MatchDate,
@@ -311,6 +336,24 @@ public class BoardController : Controller
         if (home.League != away.League)
         {
             ModelState.AddModelError(string.Empty, "Home and away team must be from the same league.");
+            model.Teams = await _context.Teams
+                .OrderBy(t => t.League)
+                .ThenBy(t => t.Name)
+                .ToListAsync(cancellationToken);
+            return View(model);
+        }
+
+        var matchDate = model.MatchDate.Date;
+        var hasTeamConflict = await _context.Matches
+            .Where(m => m.Id != id)
+            .AnyAsync(m =>
+                m.MatchDate.Date == matchDate &&
+                (m.HomeTeam == home.Name || m.AwayTeam == home.Name || m.HomeTeam == away.Name || m.AwayTeam == away.Name),
+                cancellationToken);
+
+        if (hasTeamConflict)
+        {
+            ModelState.AddModelError(string.Empty, "One of the selected teams already has a match on this date.");
             model.Teams = await _context.Teams
                 .OrderBy(t => t.League)
                 .ThenBy(t => t.Name)
@@ -407,6 +450,23 @@ public class BoardController : Controller
             return await ReloadAssignView(match, model, cancellationToken);
         }
 
+        var matchDate = match.MatchDate.Date;
+        var refsWithOtherMatchThatDay = await _context.MatchAssignments
+            .Include(a => a.Match)
+            .Where(a =>
+                a.MatchId != match.Id &&
+                a.Match!.MatchDate.Date == matchDate &&
+                ids.Contains(a.RefereeId))
+            .Select(a => a.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        if (refsWithOtherMatchThatDay.Any())
+        {
+            ModelState.AddModelError("", "One or more selected referees are already assigned to another match on this day.");
+            return await ReloadAssignView(match, model, cancellationToken);
+        }
+
         _context.MatchAssignments.RemoveRange(match.Assignments);
 
         if (!string.IsNullOrEmpty(mainId))
@@ -437,13 +497,21 @@ public class BoardController : Controller
             .Distinct()
             .ToListAsync(cancellationToken);
 
+        var otherMatchRefIds = await _context.MatchAssignments
+            .Include(a => a.Match)
+            .Where(a => a.MatchId != match.Id && a.Match!.MatchDate.Date == matchDate)
+            .Select(a => a.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
         model.EligibleReferees = referees
             .Select(r => new RefereeOption
             {
                 Id = r.Id,
                 DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
                 Email = r.Email ?? "",
-                IsUnavailable = unavailableRefereeIds.Contains(r.Id) // Flags them for the JS script
+                IsUnavailable = unavailableRefereeIds.Contains(r.Id), // Flags them for the JS script
+                HasOtherMatchThatDay = otherMatchRefIds.Contains(r.Id)
             })
             .ToList();
 
@@ -457,6 +525,9 @@ public class BoardController : Controller
 
     public async Task<IActionResult> UnavailabilityRoster(CancellationToken cancellationToken)
     {
+        var today = DateTime.UtcNow.Date;
+        await DeleteExpiredUnavailabilitiesAsync(today, cancellationToken);
+
         var roster = await _context.Unavailabilities
             .Include(u => u.Referee)
             // Prioritize UserName for sorting the roster

@@ -3,24 +3,34 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
+<ul class="navbar-nav" style="display:flex;align-items:center;gap:10px;list-style:none;">
 @if (SignInManager.IsSignedIn(User))
 {
+    var currentUser = UserManager.GetUserAsync(User).Result;
+    var displayName = currentUser?.DisplayName ?? User.Identity?.Name ?? "Account";
+    var initials = new string((displayName ?? "AC")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Select(s => s[0])
+        .Take(2)
+        .ToArray())
+        .ToUpperInvariant();
+
     <li class="nav-item">
-        <a class="nav-link text-slate-600 dark:text-slate-300" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
-            @(UserManager.GetUserAsync(User).Result?.DisplayName ?? User.Identity?.Name ?? "Account")
-        </a>
+        <span class="nav-avatar">@initials</span>
+    </li>
+    <li class="nav-item">
+        <a class="nav-name" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@displayName</a>
     </li>
     <li class="nav-item">
         <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
-            <button type="submit" class="nav-link btn btn-link text-slate-600 dark:text-slate-300 border-0">Logout</button>
+            <button type="submit" class="btn-logout">Logout</button>
         </form>
     </li>
 }
 else
 {
     <li class="nav-item">
-        <a class="nav-link text-slate-600 dark:text-slate-300" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        <a class="btn btn-sm btn-secondary" asp-area="Identity" asp-page="/Account/Login">Login</a>
     </li>
 }
 </ul>

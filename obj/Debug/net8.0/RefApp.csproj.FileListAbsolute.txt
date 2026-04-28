@@ -2,7 +2,6 @@ C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\appsettings.Development.js
 C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\appsettings.json
 C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.staticwebassets.runtime.json
 C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.staticwebassets.endpoints.json
-C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.exe
 C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.deps.json
 C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.runtimeconfig.json
 C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.dll
@@ -258,3 +257,4 @@ C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\refint\RefApp.dll
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.pdb
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\RefApp.genruntimeconfig.cache
 C:\Users\valib\Desktop\RefApp\RefApp\obj\Debug\net8.0\ref\RefApp.dll
+C:\Users\valib\Desktop\RefApp\RefApp\bin\Debug\net8.0\RefApp.exe

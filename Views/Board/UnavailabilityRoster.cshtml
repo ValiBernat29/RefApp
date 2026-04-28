@@ -3,47 +3,35 @@
     ViewData["Title"] = "Unavailability Roster";
 }
 
-<main class="flex-1 p-4 pb-24">
-    <h1 class="text-2xl font-bold tracking-tight mb-6">Unavailability Roster</h1>
+<main class="page">
+    <h1 class="section-title">Unavailability Roster</h1>
 
-    <div
-        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+    <div class="panel">
         @if (!Model.Any())
         {
-            <div class="p-8 text-center text-slate-500 dark:text-slate-400">
-                <span class="material-symbols-outlined text-4xl mb-2 block">event_available</span>
-                <p>No unavailability records.</p>
-            </div>
+            <div class="panel-body"><p class="muted">No unavailability records.</p></div>
         }
         else
         {
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <th
-                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Referee</th>
-                            <th
-                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Start Date</th>
-                            <th
-                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                End Date</th>
-                            <th
-                                class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Reason</th>
+                            <th>Referee</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Reason</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tbody>
                         @foreach (var u in Model)
                         {
                             var name = u.Referee?.UserName ?? u.Referee?.Email ?? u.RefereeId;
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                <td class="px-4 py-3 font-medium">@name</td>
-                                <td class="px-4 py-3 text-sm">@u.StartDate.ToString("yyyy-MM-dd")</td>
-                                <td class="px-4 py-3 text-sm">@u.EndDate.ToString("yyyy-MM-dd")</td>
-                                <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">@(u.Reason ?? "—")</td>
+                            <tr>
+                                <td>@name</td>
+                                <td>@u.StartDate.ToString("yyyy-MM-dd")</td>
+                                <td>@u.EndDate.ToString("yyyy-MM-dd")</td>
+                                <td>@(u.Reason ?? "—")</td>
                             </tr>
                         }
                     </tbody>

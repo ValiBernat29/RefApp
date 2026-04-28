@@ -1,61 +1,57 @@
+@model IEnumerable<RefApp.Models.Match>
+
 @{
     ViewData["Title"] = "My Matches";
-    var upcoming = ViewBag.Upcoming as IList<RefApp.Models.MatchAssignment> ?? new List<RefApp.Models.MatchAssignment>();
-    var past = ViewBag.Past as IList<RefApp.Models.MatchAssignment> ?? new List<RefApp.Models.MatchAssignment>();
 }
 
-<main class="flex-1 p-4 pb-24">
-    <h1 class="text-2xl font-bold tracking-tight mb-6">My Matches</h1>
-
-    <section class="mb-8">
-        <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">Upcoming</h2>
-        @if (!upcoming.Any())
-        {
-            <p class="text-slate-500 dark:text-slate-400">No upcoming matches assigned.</p>
-        }
-        else
-        {
-            <div class="space-y-3">
-                @foreach (var a in upcoming)
-                {
-                    var m = a.Match!;
-                    var roleLabel = a.RoleType switch { RefApp.Models.MatchRoleType.Main => "Main", RefApp.Models.MatchRoleType.Assistant1 => "Assistant 1", _ => "Assistant 2" };
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-xs font-semibold text-primary dark:text-slate-400 bg-primary/10 dark:bg-primary/30 px-2 py-0.5 rounded">@roleLabel</span>
-                                <h3 class="text-base font-bold mt-1">@m.HomeTeam vs @m.AwayTeam</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">@m.MatchDate.ToString("yyyy-MM-dd HH:mm") • @m.Location</p>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-    </section>
-
-    <section>
-        <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">Past</h2>
-        @if (!past.Any())
-        {
-            <p class="text-slate-500 dark:text-slate-400">No past matches.</p>
-        }
-        else
-        {
-            <div class="space-y-3">
-                @foreach (var a in past)
-                {
-                    var m = a.Match!;
-                    var roleLabel = a.RoleType switch { RefApp.Models.MatchRoleType.Main => "Main", RefApp.Models.MatchRoleType.Assistant1 => "Asst 1", _ => "Asst 2" };
-                    <div class="bg-white/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-semibold">@m.HomeTeam vs @m.AwayTeam</p>
-                            <p class="text-xs text-slate-500">@m.MatchDate.ToString("yyyy-MM-dd") • @roleLabel</p>
-                        </div>
-                        <span class="material-symbols-outlined text-green-500">check_circle</span>
-                    </div>
-                }
-            </div>
-        }
-    </section>
+<main class="page">
+    <h1 class="section-title">My Matches</h1>
+    <p class="muted">View your upcoming and past assignments, and see your referee team.</p>
+    <div class="panel">
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Match</th>
+                        <th>Location</th>
+                        <th>Referee Team</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4">
+                                You have no match assignments yet.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>@m.MatchDate.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>
+                                <span>@m.HomeTeam</span> vs <span>@m.AwayTeam</span>
+                            </td>
+                            <td>@m.Location</td>
+                            
+                            <td>
+                                <div>
+                                    @foreach (var assignment in m.Assignments.OrderBy(a => a.RoleType))
+                                    {
+                                        var refName = assignment.Referee?.DisplayName ?? assignment.Referee?.UserName ?? "Unknown";
+                                        <div style="margin-bottom:4px;">
+                                            <span class="badge b-sky">@assignment.RoleType</span>
+                                            <span>@refName</span>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </main>
