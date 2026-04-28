@@ -2,138 +2,109 @@
     ViewData["Title"] = "Board Dashboard";
 }
 
-<main class="flex-1 pb-24">
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 p-4">
-        <div class="flex flex-col gap-1 rounded-xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <span class="material-symbols-outlined text-primary dark:text-slate-400 text-xl">pending_actions</span>
-            <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">Pending Matches</p>
-            <p class="text-2xl font-bold">@(ViewBag.PendingMatches ?? 0)</p>
-        </div>
-        <div class="flex flex-col gap-1 rounded-xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <span class="material-symbols-outlined text-amber-500 text-xl">event_busy</span>
-            <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-1">Unavailable Refs</p>
-            <p class="text-2xl font-bold">@(ViewBag.UnavailableRefsCount ?? 0)</p>
-        </div>
-        <div class="col-span-2 lg:col-span-1 flex flex-col gap-1 rounded-xl p-4 bg-primary text-white shadow-md">
-            <span class="material-symbols-outlined text-xl">assignment_late</span>
-            <p class="text-slate-300 text-xs font-medium mt-1">Matches Needing Refs</p>
-            <p class="text-2xl font-bold">@(ViewBag.MatchesNeedingAssignments ?? 0)</p>
+<main class="page">
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">Dashboard · Board</div>
+            <h1 class="page-title">Match <em>Overview</em></h1>
         </div>
     </div>
-    <!-- Tab Navigation -->
-    <div class="px-4 mb-2">
-        <div class="flex border-b border-slate-200 dark:border-slate-800 gap-6">
-            <a class="flex flex-col items-center justify-center border-b-2 border-primary dark:border-slate-100 pb-3" asp-controller="Board" asp-action="UpcomingMatches">
-                <p class="text-primary dark:text-slate-100 text-sm font-bold">Matches</p>
-            </a>
-            <a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3" asp-controller="Board" asp-action="UnavailabilityRoster">
-                <p class="text-sm font-medium">Unavailability</p>
-            </a>
+
+    <div class="stats-row">
+        <div class="stat-tile amber">
+            <div class="stat-num">@(ViewBag.PendingMatches ?? 0)</div>
+            <div class="stat-label">Matches awaiting assignment</div>
+        </div>
+        <div class="stat-tile emerald">
+            <div class="stat-num">@(ViewBag.MatchesNeedingAssignments ?? 0)</div>
+            <div class="stat-label">Matches needing referees</div>
         </div>
     </div>
-    <!-- Pending Assignments Section -->
-    <section class="mt-6 px-4">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold tracking-tight">Pending Assignments</h2>
-            <a asp-controller="Board" asp-action="UpcomingMatches" class="text-xs font-semibold text-primary dark:text-slate-400 hover:underline">View all</a>
-        </div>
-        <div class="space-y-3">
-            @{
-                var upcoming = ViewBag.UpcomingMatches as IEnumerable<RefApp.Models.Match> ?? Enumerable.Empty<RefApp.Models.Match>();
-            }
-            @if (upcoming.Any())
-            {
-                foreach (var m in upcoming.Take(3))
-                {
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 class="text-base font-bold mt-1">@m.HomeTeam vs @m.AwayTeam</h3>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold">@m.MatchDate.ToString("ddd, MMM d")</p>
-                                <p class="text-xs text-slate-500">@m.MatchDate.ToString("HH:mm") • @m.Location</p>
-                            </div>
+
+    <div class="content-grid">
+        <div>
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Pending Assignments</span>
+                    <a asp-controller="Board" asp-action="UpcomingMatches" class="btn btn-sm btn-secondary">View All</a>
+                </div>
+                <div class="panel-body">
+                    @{
+                        var upcoming = ViewBag.UpcomingMatches as IEnumerable<RefApp.Models.Match> ?? Enumerable.Empty<RefApp.Models.Match>();
+                    }
+                    @if (upcoming.Any())
+                    {
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Match</th><th>Date</th><th>Venue</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var m in upcoming.Take(5))
+                                {
+                                    <tr>
+                                        <td>@m.HomeTeam vs @m.AwayTeam</td>
+                                        <td>@m.MatchDate.ToString("dd MMM yyyy HH:mm")</td>
+                                        <td>@m.Location</td>
+                                        <td><a asp-controller="Board" asp-action="Assign" asp-route-id="@m.Id" class="btn btn-sm btn-primary">Assign</a></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
                         </div>
-                        <a asp-controller="Board" asp-action="Assign" asp-route-id="@m.Id" class="block w-full bg-primary dark:bg-slate-100 text-white dark:text-primary py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 text-center">
-                            <span class="material-symbols-outlined text-base">person_add</span>
-                            Assign Referees
-                        </a>
-                    </div>
-                }
-            }
-            else
-            {
-                <p class="text-slate-500 dark:text-slate-400 text-sm">No upcoming matches. <a asp-controller="Board" asp-action="CreateMatch" class="text-primary dark:text-slate-300 font-medium hover:underline">Create one</a>.</p>
-            }
-        </div>
-    </section>
-    <!-- Unavailability Roster -->
-    <section class="mt-8 px-4">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold tracking-tight">Unavailability Roster</h2>
-            <a class="text-primary dark:text-slate-400 text-xs font-bold flex items-center gap-1" asp-controller="Board" asp-action="UnavailabilityRoster">
-                View All <span class="material-symbols-outlined text-sm">chevron_right</span>
-            </a>
-        </div>
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
-            @{
-                var recentUnavail = ViewBag.RecentUnavailabilities as IEnumerable<RefApp.Models.Unavailability> ?? Enumerable.Empty<RefApp.Models.Unavailability>();
-            }
-            @if (recentUnavail.Any())
-            {
-                foreach (var u in recentUnavail)
-                {
-                    var name = u.Referee?.DisplayName ?? u.Referee?.Email ?? u.Referee?.UserName ?? "—";
-                    <div class="p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-bold">@name</p>
-                            <p class="text-[10px] text-slate-500">@u.StartDate.ToString("MMM d") – @u.EndDate.ToString("MMM d, yyyy")</p>
+                    }
+                    else
+                    {
+                        <p class="muted">No upcoming matches. <a asp-controller="Board" asp-action="CreateMatch">Create one</a>.</p>
+                    }
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Unavailability Roster</span>
+                    <a asp-controller="Board" asp-action="UnavailabilityRoster" class="btn btn-sm btn-secondary">View All</a>
+                </div>
+                <div class="panel-body">
+                    @{
+                        var recentUnavail = ViewBag.RecentUnavailabilities as IEnumerable<RefApp.Models.Unavailability> ?? Enumerable.Empty<RefApp.Models.Unavailability>();
+                    }
+                    @if (recentUnavail.Any())
+                    {
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead><tr><th>Referee</th><th>Range</th><th>Status</th></tr></thead>
+                                <tbody>
+                                @foreach (var u in recentUnavail)
+                                {
+                                    var name = u.Referee?.DisplayName ?? u.Referee?.Email ?? u.Referee?.UserName ?? "—";
+                                    <tr>
+                                        <td>@name</td>
+                                        <td>@u.StartDate.ToString("MMM d") - @u.EndDate.ToString("MMM d, yyyy")</td>
+                                        <td><span class="badge b-rose">Unavailable</span></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="text-right">
-                            <span class="text-[10px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">Unavailable</span>
-                            @if (!string.IsNullOrEmpty(u.Reason))
-                            {
-                                <p class="text-[10px] text-slate-400 mt-1">@u.Reason</p>
-                            }
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="p-4 text-slate-500 dark:text-slate-400 text-sm">No current unavailability records.</div>
-            }
+                    }
+                    else
+                    {
+                        <p class="muted">No current unavailability records.</p>
+                    }
+                </div>
+            </div>
         </div>
-    </section>
+
+        <aside class="side-col">
+            <div class="panel">
+                <div class="panel-header"><span class="panel-title">Quick Actions</span></div>
+                <div class="panel-body actions">
+                    <a asp-action="CreateMatch" class="btn btn-primary">Create Match</a>
+                    <a asp-action="Users" class="btn btn-secondary">Manage Users</a>
+                    <a asp-action="Teams" class="btn btn-secondary">Manage Teams</a>
+                </div>
+            </div>
+        </aside>
+    </div>
 </main>
-<!-- Bottom Navigation Bar -->
-<nav class="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pb-6 pt-2 z-50">
-    <div class="flex gap-2">
-        <a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary dark:text-slate-100" asp-controller="Board" asp-action="Index">
-            <div class="flex h-8 items-center justify-center">
-                <span class="material-symbols-outlined fill-1">home</span>
-            </div>
-            <p class="text-[10px] font-bold leading-normal tracking-wide">Home</p>
-        </a>
-        <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400" asp-controller="Board" asp-action="UpcomingMatches">
-            <div class="flex h-8 items-center justify-center">
-                <span class="material-symbols-outlined">sports_soccer</span>
-            </div>
-            <p class="text-[10px] font-medium leading-normal tracking-wide">Matches</p>
-        </a>
-        <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400" asp-controller="Board" asp-action="Users">
-            <div class="flex h-8 items-center justify-center">
-                <span class="material-symbols-outlined">groups</span>
-            </div>
-            <p class="text-[10px] font-medium leading-normal tracking-wide">Users</p>
-        </a>
-        <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400" asp-controller="Board" asp-action="Teams">
-            <div class="flex h-8 items-center justify-center">
-                <span class="material-symbols-outlined">flag</span>
-            </div>
-            <p class="text-[10px] font-medium leading-normal tracking-wide">Teams</p>
-        </a>
-    </div>
-</nav>

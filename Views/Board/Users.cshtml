@@ -4,77 +4,46 @@
     var roles = ViewBag.UserRoles as Dictionary<string, string>;
 }
 
-<main class="flex-1 p-4 pb-24">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 class="text-2xl font-bold tracking-tight">System Users</h1>
-
-        <a asp-area="Identity" asp-page="/Account/Register"
-            class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors">
-            <span class="material-symbols-outlined text-lg">person_add</span>
-            Add New User
-        </a>
-    </div>
+<main class="page">
+    <h1 class="section-title">System Users</h1>
+    <div class="toolbar"><div></div><a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary">Add New User</a></div>
 
     @if (TempData["Success"] != null)
     {
-        <div
-            class="mb-4 p-4 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
     @if (TempData["Error"] != null)
     {
-        <div
-            class="mb-4 p-4 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-error">@TempData["Error"]</div>
     }
 
-    <div
-        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+    <div class="panel">
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <th
-                            class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            Username</th>
-                        <th
-                            class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            Display Name</th>
-                        <th
-                            class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            Role</th>
-                        <th
-                            class="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
-                            Actions</th>
+                        <th>Username</th>
+                        <th>Display Name</th>
+                        <th>Role</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody>
                     @foreach (var u in Model)
                     {
                         var roleName = roles != null && roles.ContainsKey(u.Id) ? roles[u.Id] : "—";
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                            <td class="px-4 py-3 font-medium">@u.UserName</td>
-                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">@(u.DisplayName ?? "—")</td>
-                            <td class="px-4 py-3 text-sm">
-                                <span
-                                    class="px-2 py-1 rounded-full text-xs font-medium @(roleName.Contains("Board") ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300")">
-                                    @roleName
-                                </span>
+                        <tr>
+                            <td>@u.UserName</td>
+                            <td>@(u.DisplayName ?? "—")</td>
+                            <td>
+                                <span class="badge @(roleName.Contains("Board") ? "b-amber" : "b-sky")">@roleName</span>
                             </td>
-                            <td class="px-4 py-3 text-right space-x-3">
-                                <a asp-action="EditUser" asp-route-id="@u.Id"
-                                    class="inline-flex items-center gap-1 text-primary dark:text-slate-300 font-medium hover:underline text-sm">
-                                    <span class="material-symbols-outlined text-base">edit</span> Edit
-                                </a>
+                            <td class="actions">
+                                <a asp-action="EditUser" asp-route-id="@u.Id" class="btn btn-sm btn-secondary">Edit</a>
 
                                 <form asp-action="DeleteUser" asp-route-id="@u.Id" method="post" class="inline"
                                     onsubmit="return confirm('Are you sure you want to permanently delete @u.UserName?');">
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-medium hover:underline text-sm">
-                                        <span class="material-symbols-outlined text-base">delete</span> Delete
-                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                 </form>
                             </td>
                         </tr>

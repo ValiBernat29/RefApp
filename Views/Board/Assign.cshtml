@@ -3,14 +3,11 @@
     ViewData["Title"] = "Assign Referees";
 }
 
-<main class="flex-1 p-4 pb-24 max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold tracking-tight mb-2">Assign Referees</h1>
-    <p class="text-slate-600 dark:text-slate-400 mb-6">@Model.HomeTeam vs @Model.AwayTeam —
-        @Model.MatchDate.ToString("yyyy-MM-dd HH:mm") at @Model.Location</p>
-
-    <form id="assignForm" asp-action="Assign" asp-route-id="@Model.MatchId" method="post"
-        class="space-y-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-        <div asp-validation-summary="All" class="text-red-600 dark:text-red-400 text-sm"></div>
+<main class="page">
+    <h1 class="section-title">Assign Referees</h1>
+    <p class="muted">@Model.HomeTeam vs @Model.AwayTeam - @Model.MatchDate.ToString("yyyy-MM-dd HH:mm") at @Model.Location</p>
+    <form id="assignForm" asp-action="Assign" asp-route-id="@Model.MatchId" method="post" class="form-card form-grid">
+        <div asp-validation-summary="All" class="validation"></div>
 
         @{
             string BuildLabel(RefApp.ViewModels.RefereeOption r)
@@ -31,9 +28,8 @@
         }
 
         <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Main Referee</label>
-            <select asp-for="MainRefereeId"
-                class="ref-select w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+            <label>Main Referee</label>
+            <select asp-for="MainRefereeId" class="ref-select">
                 <option value="">(None)</option>
                 @foreach (var r in Model.EligibleReferees)
                 {
@@ -43,9 +39,8 @@
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assistant 1</label>
-            <select asp-for="Assistant1Id"
-                class="ref-select w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+            <label>Assistant 1</label>
+            <select asp-for="Assistant1Id" class="ref-select">
                 <option value="">(None)</option>
                 @foreach (var r in Model.EligibleReferees)
                 {
@@ -55,9 +50,8 @@
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Assistant 2</label>
-            <select asp-for="Assistant2Id"
-                class="ref-select w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+            <label>Assistant 2</label>
+            <select asp-for="Assistant2Id" class="ref-select">
                 <option value="">(None)</option>
                 @foreach (var r in Model.EligibleReferees)
                 {
@@ -66,15 +60,9 @@
             </select>
         </div>
 
-        <div class="flex gap-3 pt-2">
-            <button type="submit"
-                class="bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
-                Save Assignments
-            </button>
-            <a asp-action="UpcomingMatches"
-                class="inline-flex items-center justify-center py-2.5 px-6 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
-                Back to Matches
-            </a>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Save Assignments</button>
+            <a asp-action="UpcomingMatches" class="btn btn-secondary">Back to Matches</a>
         </div>
     </form>
 </main>

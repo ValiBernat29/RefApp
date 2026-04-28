@@ -19,6 +19,13 @@ public class RefereeController : Controller
         _userManager = userManager;
     }
 
+    private async Task DeleteExpiredUnavailabilitiesAsync(DateTime todayUtcDate, CancellationToken cancellationToken)
+    {
+        await _context.Unavailabilities
+            .Where(u => u.EndDate < todayUtcDate)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     private async Task<string?> GetCurrentRefereeIdAsync(CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -30,28 +37,29 @@ public class RefereeController : Controller
         return View();
     }
 
+    [HttpGet]
     public async Task<IActionResult> MyMatches(CancellationToken cancellationToken)
     {
-        var refereeId = await GetCurrentRefereeIdAsync(cancellationToken);
-        if (refereeId == null) return Challenge();
+        // Preluăm ID-ul arbitrului logat
+        var userId = _userManager.GetUserId(User);
+        if (userId == null) return Challenge();
 
-        var now = DateTime.UtcNow;
-        var assignments = await _context.MatchAssignments
-            .Include(a => a.Match)
-            .Where(a => a.RefereeId == refereeId)
-            .OrderByDescending(a => a.Match!.MatchDate)
+        // Găsim meciurile lui, dar aducem și TOATE delegările pentru acele meciuri
+        var myMatches = await _context.Matches
+            .Include(m => m.Assignments)
+                .ThenInclude(a => a.Referee) // Tragem și datele colegilor din baza de date
+            .Where(m => m.Assignments.Any(a => a.RefereeId == userId))
+            .OrderBy(m => m.MatchDate)
             .ToListAsync(cancellationToken);
 
-        var upcoming = assignments.Where(a => a.Match!.MatchDate >= now).OrderBy(a => a.Match!.MatchDate).ToList();
-        var past = assignments.Where(a => a.Match!.MatchDate < now).ToList();
-
-        ViewBag.Upcoming = upcoming;
-        ViewBag.Past = past;
-        return View();
+        return View(myMatches);
     }
 
     public async Task<IActionResult> MyAvailability(CancellationToken cancellationToken)
     {
+        var today = DateTime.UtcNow.Date;
+        await DeleteExpiredUnavailabilitiesAsync(today, cancellationToken);
+
         var refereeId = await GetCurrentRefereeIdAsync(cancellationToken);
         if (refereeId == null) return Challenge();
 
