@@ -272,12 +272,20 @@ public static class DbInitializer
             ("Șoimii Livada", "Banatul Arad", new DateTime(2026, 06, 06, 18, 00, 0)),
         };
 
-        foreach (var (home, away, date) in fixtures)
-        {
-            bool alreadyExists = context.Matches.Any(m =>
-                m.HomeTeam == home && m.AwayTeam == away && m.MatchDate == date);
+        var saturdayTeams = new[] { "Olimpia Bujac", "ACS Sâmbăteni", "Voința Mailat", "Mureșul Zădăreni" };
 
-            if (!alreadyExists)
+        foreach (var (home, away, originalDate) in fixtures)
+        {
+            var date = originalDate;
+            if (!saturdayTeams.Contains(home))
+            {
+                date = date.AddDays(1);
+            }
+
+            var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
+                m.HomeTeam == home && m.AwayTeam == away);
+
+            if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
@@ -286,6 +294,13 @@ public static class DbInitializer
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
+            }
+            else
+            {
+                if (existingMatch.MatchDate != date)
+                {
+                    existingMatch.MatchDate = date;
+                }
             }
         }
         await context.SaveChangesAsync();
@@ -343,12 +358,20 @@ public static class DbInitializer
             ("Podgoria Ghioroc", "Frontiera Pilu", new DateTime(2026, 05, 23, 17, 00, 0)),
         };
 
-        foreach (var (home, away, date) in fixtures)
-        {
-            bool alreadyExists = context.Matches.Any(m =>
-                m.HomeTeam == home && m.AwayTeam == away && m.MatchDate == date);
+        var saturdayTeams = new[] { "FC Sântana", "Podgoria Ghioroc", "Real Horia" };
 
-            if (!alreadyExists)
+        foreach (var (home, away, originalDate) in fixtures)
+        {
+            var date = originalDate;
+            if (!saturdayTeams.Contains(home))
+            {
+                date = date.AddDays(1);
+            }
+
+            var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
+                m.HomeTeam == home && m.AwayTeam == away);
+
+            if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
@@ -357,6 +380,13 @@ public static class DbInitializer
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
+            }
+            else
+            {
+                if (existingMatch.MatchDate != date)
+                {
+                    existingMatch.MatchDate = date;
+                }
             }
         }
         await context.SaveChangesAsync();
@@ -430,12 +460,18 @@ public static class DbInitializer
             ("Voința Sintea Mare", "Unirea Gurahonț", new DateTime(2026, 06, 06, 18, 00, 0)),
         };
 
-        foreach (var (home, away, date) in fixtures)
+        foreach (var (home, away, originalDate) in fixtures)
         {
-            bool alreadyExists = context.Matches.Any(m =>
-                m.HomeTeam == home && m.AwayTeam == away && m.MatchDate == date);
+            var date = originalDate;
+            if (home != "Victoria Ineu")
+            {
+                date = date.AddDays(1);
+            }
 
-            if (!alreadyExists)
+            var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
+                m.HomeTeam == home && m.AwayTeam == away);
+
+            if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
@@ -444,6 +480,13 @@ public static class DbInitializer
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
+            }
+            else
+            {
+                if (existingMatch.MatchDate != date)
+                {
+                    existingMatch.MatchDate = date;
+                }
             }
         }
         await context.SaveChangesAsync();
