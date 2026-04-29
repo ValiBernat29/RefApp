@@ -14,7 +14,7 @@ if (builder.Environment.IsDevelopment())
 else
 {
     var connectionString = builder.Configuration.GetConnectionString("ProductionConnection") 
-        ?? throw new InvalidOperationException("Connection string 'ProductionConnection' not found.");
+        ?? "Server=fake;Database=fake;";
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
 }
@@ -55,10 +55,19 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-using (var scope = app.Services.CreateScope())
+try 
 {
-    var services = scope.ServiceProvider;
-    await DbInitializer.InitializeAsync(services);
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        await DbInitializer.InitializeAsync(services);
+    }
+}
+catch (Exception ex)
+{
+    app.MapGet("/", () => $"STARTUP ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+    app.Run();
+    return;
 }
 
 app.MapControllerRoute(
