@@ -76,6 +76,14 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-
+app.MapGet("/debug-conn", (IConfiguration config) => {
+    var connStr = config.GetConnectionString("ProductionConnection");
+    if (string.IsNullOrEmpty(connStr)) return "CONNECTION STRING IS MISSING OR NULL!";
+    if (connStr == "Server=fake;Database=fake;") return "CONNECTION STRING FELL BACK TO FAKE!";
+    
+    // Safely print part of it to verify it loaded
+    var safeStr = connStr.Length > 20 ? connStr.Substring(0, 20) + "..." : connStr;
+    return $"CONNECTION STRING FOUND! Starts with: {safeStr}";
+});
 
 app.Run();
