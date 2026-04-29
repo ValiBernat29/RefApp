@@ -11,7 +11,7 @@ using RefApp.Data;
 namespace RefApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260304224112_InitialCreate")]
+    [Migration("20260429135014_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -273,6 +273,28 @@ namespace RefApp.Migrations
                     b.HasIndex("RefereeId");
 
                     b.ToTable("MatchAssignments");
+                });
+
+            modelBuilder.Entity("RefApp.Models.Team", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("League")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PreferredMatchDay")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("RefApp.Models.Unavailability", b =>
