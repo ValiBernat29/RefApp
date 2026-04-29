@@ -55,20 +55,20 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-try 
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        await DbInitializer.InitializeAsync(services);
-    }
-}
-catch (Exception ex)
-{
-    app.MapGet("/", () => $"STARTUP ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
-    app.Run();
-    return;
-}
+// try 
+// {
+//     using (var scope = app.Services.CreateScope())
+//     {
+//         var services = scope.ServiceProvider;
+//         await DbInitializer.InitializeAsync(services);
+//     }
+// }
+// catch (Exception ex)
+// {
+//     app.MapGet("/", () => $"STARTUP ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+//     app.Run();
+//     return;
+// }
 
 app.MapControllerRoute(
     name: "default",
