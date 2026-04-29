@@ -1,49 +1,53 @@
 @model IEnumerable<RefApp.Models.Match>
-
 @{
     ViewData["Title"] = "My Matches";
 }
 
-<main class="page">
-    <h1 class="section-title">My Matches</h1>
-    <p class="muted">View your upcoming and past assignments, and see your referee team.</p>
-    <div class="panel">
-        <div class="table-wrap">
-            <table class="data-table">
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
+
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">My Matches</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Referee" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span><span>My Matches</span>
+        </nav>
+        <p class="text-sm text-gray-500 mt-1">View your upcoming and past assignments, and see your referee team.</p>
+    </div>
+
+    <section class="bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
                 <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Match</th>
-                        <th>Location</th>
-                        <th>Referee Team</th>
+                    <tr class="bg-gray-50 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                        <th class="px-6 py-3">Date &amp; Time</th>
+                        <th class="px-6 py-3">Match</th>
+                        <th class="px-6 py-3">Location</th>
+                        <th class="px-6 py-3">Referee Team</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-100">
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="4">
+                            <td colspan="4" class="px-6 py-10 text-center text-gray-400 text-sm">
                                 You have no match assignments yet.
                             </td>
                         </tr>
                     }
                     @foreach (var m in Model)
                     {
-                        <tr>
-                            <td>@m.MatchDate.ToString("dd MMM yyyy HH:mm")</td>
-                            <td>
-                                <span>@m.HomeTeam</span> vs <span>@m.AwayTeam</span>
-                            </td>
-                            <td>@m.Location</td>
-                            
-                            <td>
-                                <div>
+                        <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 text-sm">@m.MatchDate.ToString("dd MMM yyyy HH:mm")</td>
+                            <td class="px-6 py-4 font-medium">@m.HomeTeam vs @m.AwayTeam</td>
+                            <td class="px-6 py-4 text-sm">@m.Location</td>
+                            <td class="px-6 py-4">
+                                <div class="space-y-1">
                                     @foreach (var assignment in m.Assignments.OrderBy(a => a.RoleType))
                                     {
                                         var refName = assignment.Referee?.DisplayName ?? assignment.Referee?.UserName ?? "Unknown";
-                                        <div style="margin-bottom:4px;">
+                                        <div class="flex items-center gap-2 text-sm">
                                             <span class="badge b-sky">@assignment.RoleType</span>
-                                            <span>@refName</span>
+                                            <span class="text-gray-600">@refName</span>
                                         </div>
                                     }
                                 </div>
@@ -53,5 +57,6 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
+
 </main>

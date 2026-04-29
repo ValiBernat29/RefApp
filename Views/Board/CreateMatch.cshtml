@@ -3,68 +3,86 @@
     ViewData["Title"] = "Create Match";
 }
 
-<main class="page">
-    <h1 class="section-title">Create Match</h1>
-    <form asp-action="CreateMatch" method="post" class="form-card form-grid">
-        <div asp-validation-summary="ModelOnly" class="validation"></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
-        <div>
-            <label asp-for="League"></label>
-            <select asp-for="League"
-                    asp-items="Html.GetEnumSelectList<RefApp.Models.League>()"
-                    id="leagueSelect">
-                <option value="">Select league</option>
-            </select>
-            <span asp-validation-for="League" class="validation"></span>
-        </div>
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Create Match</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span>
+            <a asp-controller="Board" asp-action="UpcomingMatches" class="hover:text-gray-600">Matches</a>
+            <span class="mx-1">•</span><span>Create</span>
+        </nav>
+    </div>
 
-        <div>
-            <label asp-for="MatchDate"></label>
-            <input asp-for="MatchDate" type="datetime-local" step="3600" />
-            <span asp-validation-for="MatchDate" class="validation"></span>
-        </div>
+    <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
+        <form asp-action="CreateMatch" method="post" class="space-y-5">
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
 
-        <div>
-            <label asp-for="Location"></label>
-            <input asp-for="Location" placeholder="e.g. Riverside Stadium" />
-            <span asp-validation-for="Location" class="validation"></span>
-        </div>
+            <div class="space-y-1.5">
+                <label asp-for="League" class="block text-sm font-medium text-gray-700"></label>
+                <select asp-for="League" asp-items="Html.GetEnumSelectList<RefApp.Models.League>()" id="leagueSelect"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400">
+                    <option value="">Select league</option>
+                </select>
+                <span asp-validation-for="League" class="validation"></span>
+            </div>
 
-        <div>
-            <label asp-for="HomeTeamId"></label>
-            <select asp-for="HomeTeamId">
-                <option value="">Select home team</option>
-                @if (Model.Teams != null)
-                {
-                    foreach (var t in Model.Teams.OrderBy(t => t.Name))
+            <div class="space-y-1.5">
+                <label asp-for="MatchDate" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="MatchDate" type="datetime-local" step="3600"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="MatchDate" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="Location" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="Location" placeholder="e.g. Riverside Stadium"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="Location" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="HomeTeamId" class="block text-sm font-medium text-gray-700"></label>
+                <select asp-for="HomeTeamId"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400">
+                    <option value="">Select home team</option>
+                    @if (Model.Teams != null)
                     {
-                        <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
+                        foreach (var t in Model.Teams.OrderBy(t => t.Name))
+                        {
+                            <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
+                        }
                     }
-                }
-            </select>
-            <span asp-validation-for="HomeTeamId" class="validation"></span>
-        </div>
+                </select>
+                <span asp-validation-for="HomeTeamId" class="validation"></span>
+            </div>
 
-        <div>
-            <label asp-for="AwayTeamId"></label>
-            <select asp-for="AwayTeamId">
-                <option value="">Select away team</option>
-                @if (Model.Teams != null)
-                {
-                    foreach (var t in Model.Teams.OrderBy(t => t.Name))
+            <div class="space-y-1.5">
+                <label asp-for="AwayTeamId" class="block text-sm font-medium text-gray-700"></label>
+                <select asp-for="AwayTeamId"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400">
+                    <option value="">Select away team</option>
+                    @if (Model.Teams != null)
                     {
-                        <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
+                        foreach (var t in Model.Teams.OrderBy(t => t.Name))
+                        {
+                            <option value="@t.Id" data-league="@((int)t.League)">@t.Name</option>
+                        }
                     }
-                }
-            </select>
-            <span asp-validation-for="AwayTeamId" class="validation"></span>
-        </div>
+                </select>
+                <span asp-validation-for="AwayTeamId" class="validation"></span>
+            </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Create Match</button>
-            <a asp-action="UpcomingMatches" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Create Match</button>
+                <a asp-action="UpcomingMatches"
+                   class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
+            </div>
+        </form>
+    </section>
+
 </main>
 
 @section Scripts {
@@ -96,7 +114,7 @@
                 [homeSelect, awaySelect].forEach(select => {
                     if (!select) return;
                     Array.from(select.options).forEach(opt => {
-                        if (!opt.value) return; // keep placeholder
+                        if (!opt.value) return;
                         const optLeague = opt.getAttribute('data-league');
                         opt.hidden = league && optLeague !== league;
                     });
@@ -109,7 +127,6 @@
             }
 
             if (matchDateInput) {
-                // Default to next full hour if empty.
                 if (!matchDateInput.value) {
                     const d = new Date();
                     d.setHours(d.getHours() + 1);
@@ -118,7 +135,6 @@
                 } else {
                     snapToHour();
                 }
-
                 matchDateInput.addEventListener('change', snapToHour);
                 matchDateInput.addEventListener('blur', snapToHour);
             }

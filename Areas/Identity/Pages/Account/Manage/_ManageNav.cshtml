@@ -1,0 +1,38 @@
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+
+<nav class="flex flex-col space-y-1">
+    <a id="profile" asp-page="./Index"
+       class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors
+              @(ManageNavPages.IndexNavClass(ViewContext) == "active"
+                  ? "bg-sky-50 text-sky-600 border border-sky-200"
+                  : "text-gray-600 hover:bg-gray-50 border border-transparent")">
+        <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        Profile
+    </a>
+    <a id="change-password" asp-page="./ChangePassword"
+       class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors
+              @(ManageNavPages.ChangePasswordNavClass(ViewContext) == "active"
+                  ? "bg-sky-50 text-sky-600 border border-sky-200"
+                  : "text-gray-600 hover:bg-gray-50 border border-transparent")">
+        <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        Password
+    </a>
+    @if (hasExternalLogins)
+    {
+        <a id="external-login" asp-page="./ExternalLogins"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 border border-transparent transition-colors">
+            <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                <path d="M14.828 14.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102-1.101" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            </svg>
+            External Logins
+        </a>
+    }
+</nav>

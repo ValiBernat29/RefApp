@@ -4,9 +4,25 @@
     var roles = ViewBag.UserRoles as Dictionary<string, string>;
 }
 
-<main class="page">
-    <h1 class="section-title">System Users</h1>
-    <div class="toolbar"><div></div><a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary">Add New User</a></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">System Users</h1>
+            <nav class="text-sm text-gray-400 mt-0.5">
+                <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+                <span class="mx-1">•</span><span>Users</span>
+            </nav>
+        </div>
+        <a asp-area="Identity" asp-page="/Account/Register"
+           class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center space-x-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            </svg>
+            <span>Add New User</span>
+        </a>
+    </div>
 
     @if (TempData["Success"] != null)
     {
@@ -17,39 +33,43 @@
         <div class="alert alert-error">@TempData["Error"]</div>
     }
 
-    <div class="panel">
-        <div class="table-wrap">
-            <table class="data-table">
+    <section class="bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
                 <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Display Name</th>
-                        <th>Role</th>
-                        <th>Actions</th>
+                    <tr class="bg-gray-50 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                        <th class="px-6 py-3">Username</th>
+                        <th class="px-6 py-3">Display Name</th>
+                        <th class="px-6 py-3">Role</th>
+                        <th class="px-6 py-3">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-100">
                     @foreach (var u in Model)
                     {
                         var roleName = roles != null && roles.ContainsKey(u.Id) ? roles[u.Id] : "—";
-                        <tr>
-                            <td>@u.UserName</td>
-                            <td>@(u.DisplayName ?? "—")</td>
-                            <td>
+                        <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 text-sm">@u.UserName</td>
+                            <td class="px-6 py-4 font-medium">@(u.DisplayName ?? "—")</td>
+                            <td class="px-6 py-4">
                                 <span class="badge @(roleName.Contains("Board") ? "b-amber" : "b-sky")">@roleName</span>
                             </td>
-                            <td class="actions">
-                                <a asp-action="EditUser" asp-route-id="@u.Id" class="btn btn-sm btn-secondary">Edit</a>
-
-                                <form asp-action="DeleteUser" asp-route-id="@u.Id" method="post" class="inline"
-                                    onsubmit="return confirm('Are you sure you want to permanently delete @u.UserName?');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <a asp-action="EditUser" asp-route-id="@u.Id"
+                                       class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>
+                                    <form asp-action="DeleteUser" asp-route-id="@u.Id" method="post" class="inline"
+                                          onsubmit="return confirm('Are you sure you want to permanently delete @u.UserName?');">
+                                        <button type="submit"
+                                                class="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
+
 </main>

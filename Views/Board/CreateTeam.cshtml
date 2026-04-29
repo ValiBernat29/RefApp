@@ -3,40 +3,55 @@
     ViewData["Title"] = "Add Team";
 }
 
-<main class="page">
-    <h1 class="section-title">Add Team</h1>
-    <form asp-action="CreateTeam" method="post" class="form-card form-grid">
-        <div asp-validation-summary="ModelOnly" class="validation"></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
-        <div>
-            <label asp-for="Name"></label>
-            <input asp-for="Name" placeholder="Team name" />
-            <span asp-validation-for="Name" class="validation"></span>
-        </div>
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Add Team</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span>
+            <a asp-controller="Board" asp-action="Teams" class="hover:text-gray-600">Teams</a>
+            <span class="mx-1">•</span><span>Create</span>
+        </nav>
+    </div>
 
-        <div>
-            <label asp-for="League"></label>
-            <select asp-for="League" asp-items="Html.GetEnumSelectList<RefApp.Models.League>()"></select>
-            <span asp-validation-for="League" class="validation"></span>
-        </div>
+    <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
+        <form asp-action="CreateTeam" method="post" class="space-y-5">
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
 
-        <div>
-            <label asp-for="PreferredMatchDay"></label>
-            <select asp-for="PreferredMatchDay" asp-items="Html.GetEnumSelectList<DayOfWeek>()"></select>
-            <p class="muted">
-                For example: choose Saturday for L4 teams, Sunday for most other leagues. You can still change individual match dates later.
-            </p>
-            <span asp-validation-for="PreferredMatchDay" class="validation"></span>
-        </div>
+            <div class="space-y-1.5">
+                <label asp-for="Name" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="Name" placeholder="Team name"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="Name" class="validation"></span>
+            </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Save Team</button>
-            <a asp-action="Teams" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="space-y-1.5">
+                <label asp-for="League" class="block text-sm font-medium text-gray-700"></label>
+                <select asp-for="League" asp-items="Html.GetEnumSelectList<RefApp.Models.League>()"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400"></select>
+                <span asp-validation-for="League" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="PreferredMatchDay" class="block text-sm font-medium text-gray-700"></label>
+                <select asp-for="PreferredMatchDay" asp-items="Html.GetEnumSelectList<DayOfWeek>()"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400"></select>
+                <p class="text-xs text-gray-400">e.g. Saturday for L4 teams, Sunday for most other leagues. You can still change individual match dates later.</p>
+                <span asp-validation-for="PreferredMatchDay" class="validation"></span>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Team</button>
+                <a asp-action="Teams"
+                   class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
+            </div>
+        </form>
+    </section>
+
 </main>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
-

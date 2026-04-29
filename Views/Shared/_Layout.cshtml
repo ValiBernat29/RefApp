@@ -4,44 +4,98 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - RefApp</title>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS v3 CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card-shadow { box-shadow: 0 4px 24px -4px rgba(0,0,0,0.06); }
+        .bg-main-gray { background-color: #f4f7f9; }
+        .summary-card-blue { background-color: #79badb; }
+        .action-btn-outline { border: 1px solid #91b5bf; color: #6193a0; transition: all 0.2s; }
+        .action-btn-outline:hover { background-color: #f0f6f8; border-color: #6193a0; }
+        .btn-assign { background-color: #6eb7e4; transition: background-color 0.2s; }
+        .btn-assign:hover { background-color: #5ca5d2; }
+        .btn-unavailable { background-color: #94879c; }
+    </style>
 </head>
-<body>
-    @{
-        var controller = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "").ToLowerInvariant();
-        var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? "").ToLowerInvariant();
-    }
-    <nav class="top-nav">
-        <a asp-controller="Home" asp-action="Index" class="nav-brand">
-            <span class="brand-dot"></span>
-            Referee Portal
+<body class="bg-main-gray text-slate-800 min-h-screen">
+
+@{
+    var controller = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "").ToLowerInvariant();
+    var action = (ViewContext.RouteData.Values["action"]?.ToString() ?? "").ToLowerInvariant();
+}
+
+<!-- Header -->
+<header class="bg-white px-8 py-4 flex justify-between items-center border-b border-gray-100 sticky top-0 z-50">
+    <div class="flex items-center space-x-8">
+        <!-- Brand -->
+        <a asp-controller="Home" asp-action="Index" class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-sm shadow-sky-300"></span>
+            <span class="text-lg font-bold text-gray-900 tracking-tight">Referee Portal</span>
         </a>
-        <ul class="nav-links">
+
+        <!-- Nav Links -->
+        <nav class="hidden md:flex items-center space-x-1">
             @if (User.IsInRole("Board"))
             {
-                <li><a asp-controller="Board" asp-action="Index" class="@(controller == "board" && action == "index" ? "active" : "")">Home</a></li>
-                <li><a asp-controller="Board" asp-action="UpcomingMatches" class="@(controller == "board" && (action == "upcomingmatches" || action == "assign") ? "active" : "")">Upcoming Matches</a></li>
-                <li><a asp-controller="Board" asp-action="UnavailabilityRoster" class="@(controller == "board" && action == "unavailabilityroster" ? "active" : "")">Unavailability Roster</a></li>
-                <li><a asp-controller="Board" asp-action="Users" class="@(controller == "board" && action == "users" ? "active" : "")">Users</a></li>
-                <li><a asp-controller="Board" asp-action="Teams" class="@(controller == "board" && action == "teams" ? "active" : "")">Teams</a></li>
+                <a asp-controller="Board" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "index" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Home
+                </a>
+                <a asp-controller="Board" asp-action="UpcomingMatches"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && (action == "upcomingmatches" || action == "assign") ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Matches
+                </a>
+                <a asp-controller="Board" asp-action="UnavailabilityRoster"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "unavailabilityroster" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Unavailability
+                </a>
+                <a asp-controller="Board" asp-action="Users"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "users" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Users
+                </a>
+                <a asp-controller="Board" asp-action="Teams"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "teams" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Teams
+                </a>
             }
             else if (User.IsInRole("Referee"))
             {
-                <li><a asp-controller="Referee" asp-action="Index" class="@(controller == "referee" && action == "index" ? "active" : "")">Dashboard</a></li>
-                <li><a asp-controller="Referee" asp-action="MyMatches" class="@(controller == "referee" && action == "mymatches" ? "active" : "")">My Matches</a></li>
-                <li><a asp-controller="Referee" asp-action="MyAvailability" class="@(controller == "referee" && action == "myavailability" ? "active" : "")">My Availability</a></li>
+                <a asp-controller="Referee" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "referee" && action == "index" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Dashboard
+                </a>
+                <a asp-controller="Referee" asp-action="MyMatches"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "referee" && action == "mymatches" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    My Matches
+                </a>
+                <a asp-controller="Referee" asp-action="MyAvailability"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "referee" && (action == "myavailability" || action == "createunavailability" || action == "editunavailability" || action == "deleteunavailability") ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    My Availability
+                </a>
             }
             else
             {
-                <li><a asp-controller="Home" asp-action="Index" class="@(controller == "home" ? "active" : "")">Home</a></li>
+                <a asp-controller="Home" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "home" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Home
+                </a>
             }
-        </ul>
-        <div class="nav-right">
-            <partial name="_LoginPartial" />
-        </div>
-    </nav>
-    @RenderBody()
-    @RenderSection("Scripts", required: false)
+        </nav>
+    </div>
+
+    <!-- Right: User -->
+    <div class="flex items-center space-x-4 text-gray-400">
+        <partial name="_LoginPartial" />
+    </div>
+</header>
+
+@RenderBody()
+@RenderSection("Scripts", required: false)
 </body>
 </html>

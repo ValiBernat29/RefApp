@@ -41,7 +41,7 @@ public class BoardController : Controller
             .Take(5)
             .ToListAsync(cancellationToken);
 
-        ViewBag.PendingMatches = await _context.Matches
+        ViewBag.UpcomingMatchesCount = await _context.Matches
             .CountAsync(m => m.MatchDate >= today && m.MatchDate < endOfWindow, cancellationToken);
 
         var matchesNeedingAssignments = await _context.Matches
@@ -371,6 +371,25 @@ public class BoardController : Controller
         return RedirectToAction(nameof(UpcomingMatches));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteMatch(int id, CancellationToken cancellationToken)
+    {
+        var match = await _context.Matches
+            .Include(m => m.Assignments)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+
+        if (match == null)
+            return NotFound();
+
+        _context.MatchAssignments.RemoveRange(match.Assignments);
+        _context.Matches.Remove(match);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        TempData["Success"] = $"Match {match.HomeTeam} vs {match.AwayTeam} deleted successfully.";
+        return RedirectToAction(nameof(UpcomingMatches));
+    }
+
     [HttpGet]
     public async Task<IActionResult> Assign(int id, CancellationToken cancellationToken)
     {
@@ -395,22 +414,37 @@ public class BoardController : Controller
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        var otherMatchRefIds = await _context.MatchAssignments
+        var matchHour = match.MatchDate.Hour;
+
+        // Hard conflict: same day AND same hour → referee cannot be double-booked
+        var conflictRefIds = await _context.MatchAssignments
             .Include(a => a.Match)
-            .Where(a => a.MatchId != match.Id && a.Match!.MatchDate.Date == matchDate)
+            .Where(a => a.MatchId != match.Id
+                && a.Match!.MatchDate.Date == matchDate
+                && a.Match!.MatchDate.Hour == matchHour)
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        // We removed the filter here so EVERYONE shows up!
+        // Soft warning: same day but different hour
+        var sameDayDiffTimeRefIds = await _context.MatchAssignments
+            .Include(a => a.Match)
+            .Where(a => a.MatchId != match.Id
+                && a.Match!.MatchDate.Date == matchDate
+                && a.Match!.MatchDate.Hour != matchHour)
+            .Select(a => a.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
         var eligible = referees
             .Select(r => new RefereeOption
             {
                 Id = r.Id,
                 DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
                 Email = r.Email ?? "",
-                IsUnavailable = unavailableRefereeIds.Contains(r.Id), // This flags them for the JS script
-                HasOtherMatchThatDay = otherMatchRefIds.Contains(r.Id)
+                IsUnavailable = unavailableRefereeIds.Contains(r.Id),
+                HasConflictingMatch = conflictRefIds.Contains(r.Id),
+                HasOtherMatchThatDay = sameDayDiffTimeRefIds.Contains(r.Id)
             })
             .ToList();
 
@@ -451,19 +485,23 @@ public class BoardController : Controller
         }
 
         var matchDate = match.MatchDate.Date;
-        var refsWithOtherMatchThatDay = await _context.MatchAssignments
+        var matchHour = match.MatchDate.Hour;
+
+        // Hard block only when day AND hour overlap (same kick-off hour)
+        var refsWithConflict = await _context.MatchAssignments
             .Include(a => a.Match)
             .Where(a =>
                 a.MatchId != match.Id &&
                 a.Match!.MatchDate.Date == matchDate &&
+                a.Match!.MatchDate.Hour == matchHour &&
                 ids.Contains(a.RefereeId))
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        if (refsWithOtherMatchThatDay.Any())
+        if (refsWithConflict.Any())
         {
-            ModelState.AddModelError("", "One or more selected referees are already assigned to another match on this day.");
+            ModelState.AddModelError("", "One or more selected referees are already assigned to another match at the same time (same day and hour).");
             return await ReloadAssignView(match, model, cancellationToken);
         }
 
@@ -491,15 +529,28 @@ public class BoardController : Controller
             .ToListAsync(cancellationToken);
 
         var matchDate = match.MatchDate.Date;
+        var matchHour = match.MatchDate.Hour;
+
         var unavailableRefereeIds = await _context.Unavailabilities
             .Where(u => u.StartDate <= matchDate && u.EndDate >= matchDate)
             .Select(u => u.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        var otherMatchRefIds = await _context.MatchAssignments
+        var conflictRefIds = await _context.MatchAssignments
             .Include(a => a.Match)
-            .Where(a => a.MatchId != match.Id && a.Match!.MatchDate.Date == matchDate)
+            .Where(a => a.MatchId != match.Id
+                && a.Match!.MatchDate.Date == matchDate
+                && a.Match!.MatchDate.Hour == matchHour)
+            .Select(a => a.RefereeId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var sameDayDiffTimeRefIds = await _context.MatchAssignments
+            .Include(a => a.Match)
+            .Where(a => a.MatchId != match.Id
+                && a.Match!.MatchDate.Date == matchDate
+                && a.Match!.MatchDate.Hour != matchHour)
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -510,8 +561,9 @@ public class BoardController : Controller
                 Id = r.Id,
                 DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
                 Email = r.Email ?? "",
-                IsUnavailable = unavailableRefereeIds.Contains(r.Id), // Flags them for the JS script
-                HasOtherMatchThatDay = otherMatchRefIds.Contains(r.Id)
+                IsUnavailable = unavailableRefereeIds.Contains(r.Id),
+                HasConflictingMatch = conflictRefIds.Contains(r.Id),
+                HasOtherMatchThatDay = sameDayDiffTimeRefIds.Contains(r.Id)
             })
             .ToList();
 

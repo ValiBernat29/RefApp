@@ -3,93 +3,110 @@
     ViewData["Title"] = "Assign Referees";
 }
 
-<main class="page">
-    <h1 class="section-title">Assign Referees</h1>
-    <p class="muted">@Model.HomeTeam vs @Model.AwayTeam - @Model.MatchDate.ToString("yyyy-MM-dd HH:mm") at @Model.Location</p>
-    <form id="assignForm" asp-action="Assign" asp-route-id="@Model.MatchId" method="post" class="form-card form-grid">
-        <div asp-validation-summary="All" class="validation"></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
-        @{
-            string BuildLabel(RefApp.ViewModels.RefereeOption r)
-            {
-                var label = r.DisplayName;
-                var badges = new List<string>();
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Assign Referees</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span>
+            <a asp-controller="Board" asp-action="UpcomingMatches" class="hover:text-gray-600">Matches</a>
+            <span class="mx-1">•</span><span>Assign</span>
+        </nav>
+    </div>
 
-                if (r.IsUnavailable) badges.Add("❌ Unavailable");
-                if (r.HasOtherMatchThatDay) badges.Add("⚠ Already assigned");
+    <!-- Match Info Banner -->
+    <div class="bg-white rounded-xl card-shadow p-5 flex items-center space-x-4 border-l-4 border-sky-400">
+        <svg class="h-8 w-8 text-sky-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        </svg>
+        <div>
+            <p class="font-semibold text-gray-800">@Model.HomeTeam vs @Model.AwayTeam</p>
+            <p class="text-sm text-gray-500">@Model.MatchDate.ToString("dddd, dd MMM yyyy HH:mm") · @Model.Location</p>
+        </div>
+    </div>
 
-                if (badges.Count > 0)
+    <!-- Assignment Form -->
+    <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
+        <form id="assignForm" asp-action="Assign" asp-route-id="@Model.MatchId" method="post" class="space-y-5">
+            <div asp-validation-summary="All" class="validation"></div>
+
+            @{
+                string BuildLabel(RefApp.ViewModels.RefereeOption r)
                 {
-                    label += " - " + string.Join(", ", badges);
+                    var label = r.DisplayName;
+                    var badges = new List<string>();
+                    if (r.IsUnavailable) badges.Add("❌ Unavailable");
+                    if (r.HasConflictingMatch) badges.Add("❌ TIME CONFLICT");
+                    else if (r.HasOtherMatchThatDay) badges.Add("⚠ Match at different hour");
+                    
+                    if (badges.Count > 0) label += " — " + string.Join(", ", badges);
+                    return label;
                 }
-
-                return label;
             }
-        }
 
-        <div>
-            <label>Main Referee</label>
-            <select asp-for="MainRefereeId" class="ref-select">
-                <option value="">(None)</option>
-                @foreach (var r in Model.EligibleReferees)
-                {
-                    <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")">@BuildLabel(r)</option>
-                }
-            </select>
-        </div>
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-gray-700">Main Referee</label>
+                <select asp-for="MainRefereeId" class="ref-select">
+                    <option value="">(None)</option>
+                    @foreach (var r in Model.EligibleReferees)
+                    {
+                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
+                    }
+                </select>
+            </div>
 
-        <div>
-            <label>Assistant 1</label>
-            <select asp-for="Assistant1Id" class="ref-select">
-                <option value="">(None)</option>
-                @foreach (var r in Model.EligibleReferees)
-                {
-                    <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")">@BuildLabel(r)</option>
-                }
-            </select>
-        </div>
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-gray-700">Assistant 1</label>
+                <select asp-for="Assistant1Id" class="ref-select">
+                    <option value="">(None)</option>
+                    @foreach (var r in Model.EligibleReferees)
+                    {
+                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
+                    }
+                </select>
+            </div>
 
-        <div>
-            <label>Assistant 2</label>
-            <select asp-for="Assistant2Id" class="ref-select">
-                <option value="">(None)</option>
-                @foreach (var r in Model.EligibleReferees)
-                {
-                    <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")">@BuildLabel(r)</option>
-                }
-            </select>
-        </div>
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-gray-700">Assistant 2</label>
+                <select asp-for="Assistant2Id" class="ref-select">
+                    <option value="">(None)</option>
+                    @foreach (var r in Model.EligibleReferees)
+                    {
+                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
+                    }
+                </select>
+            </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Save Assignments</button>
-            <a asp-action="UpcomingMatches" class="btn btn-secondary">Back to Matches</a>
-        </div>
-    </form>
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Assignments</button>
+                <a asp-action="UpcomingMatches"
+                   class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Back to Matches</a>
+            </div>
+        </form>
+    </section>
+
 </main>
 
 @section Scripts {
     <script>
         document.getElementById('assignForm').addEventListener('submit', function (e) {
             let hasUnavailableRef = false;
-
-            // Get all our select dropdowns
             const selects = document.querySelectorAll('.ref-select');
-
             selects.forEach(select => {
-                if (select.selectedIndex > 0) { // If an option other than (None) is chosen
+                if (select.selectedIndex > 0) {
                     const selectedOption = select.options[select.selectedIndex];
-                    // Check if we attached our custom 'true' data attribute to it
                     if (selectedOption.getAttribute('data-unavailable') === 'true') {
                         hasUnavailableRef = true;
                     }
                 }
             });
-
-            // If an unavailable ref was selected, trigger the warning
             if (hasUnavailableRef) {
                 const confirmed = confirm("Warning: One or more selected referees are marked as UNAVAILABLE for this date.\n\nAre you sure you want to assign them anyway?");
                 if (!confirmed) {
-                    e.preventDefault(); // This stops the form from submitting if they click Cancel
+                    e.preventDefault();
                 }
             }
         });

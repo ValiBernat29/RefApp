@@ -3,47 +3,65 @@
     ViewData["Title"] = "Teams Management";
 }
 
-<main class="page">
-    <h1 class="section-title">Teams</h1>
-    <div class="toolbar"><div></div><a asp-action="CreateTeam" class="btn btn-primary">Add New Team</a></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Teams</h1>
+            <nav class="text-sm text-gray-400 mt-0.5">
+                <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+                <span class="mx-1">•</span><span>Teams</span>
+            </nav>
+        </div>
+        <a asp-action="CreateTeam"
+           class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center space-x-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            </svg>
+            <span>Add New Team</span>
+        </a>
+    </div>
 
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
     }
 
-    <div class="panel">
-        <div class="table-wrap">
-            <table class="data-table">
+    <section class="bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
                 <thead>
-                    <tr>
-                        <th>Team Name</th>
-                        <th>League</th>
-                        <th>Match Day</th>
-                        <th>Actions</th>
+                    <tr class="bg-gray-50 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                        <th class="px-6 py-3">Team Name</th>
+                        <th class="px-6 py-3">League</th>
+                        <th class="px-6 py-3">Match Day</th>
+                        <th class="px-6 py-3">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-100">
                     @foreach (var t in Model)
                     {
-                        <tr>
-                            <td>@t.Name</td>
-                            <td>
-                                <span class="badge b-sky">@t.League</span>
-                            </td>
-                            <td>@t.PreferredMatchDay</td>
-                            <td class="actions">
-                                <a asp-action="EditTeam" asp-route-id="@t.Id" class="btn btn-sm btn-secondary">Edit</a>
-
-                                <form asp-action="DeleteTeam" asp-route-id="@t.Id" method="post" class="inline"
-                                    onsubmit="return confirm('Are you sure you want to permanently delete @t.Name?');">
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
+                        <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 font-medium">@t.Name</td>
+                            <td class="px-6 py-4"><span class="badge b-sky">@t.League</span></td>
+                            <td class="px-6 py-4 text-sm">@t.PreferredMatchDay</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <a asp-action="EditTeam" asp-route-id="@t.Id"
+                                       class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>
+                                    <form asp-action="DeleteTeam" asp-route-id="@t.Id" method="post" class="inline"
+                                          onsubmit="return confirm('Are you sure you want to permanently delete @t.Name?');">
+                                        <button type="submit"
+                                                class="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
+
 </main>

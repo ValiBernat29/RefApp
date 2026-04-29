@@ -3,40 +3,58 @@
     ViewData["Title"] = "Unavailability Roster";
 }
 
-<main class="page">
-    <h1 class="section-title">Unavailability Roster</h1>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
-    <div class="panel">
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Unavailability Roster</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span><span>Unavailability</span>
+        </nav>
+    </div>
+
+    <section class="bg-white rounded-xl card-shadow overflow-hidden">
         @if (!Model.Any())
         {
-            <div class="panel-body"><p class="muted">No unavailability records.</p></div>
+            <div class="px-6 py-12 text-center text-gray-400 text-sm">No unavailability records.</div>
         }
         else
         {
-            <div class="table-wrap">
-                <table class="data-table">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
                     <thead>
-                        <tr>
-                            <th>Referee</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Reason</th>
+                        <tr class="bg-gray-50 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                            <th class="px-6 py-3">Referee</th>
+                            <th class="px-6 py-3">Start Date</th>
+                            <th class="px-6 py-3">End Date</th>
+                            <th class="px-6 py-3">Reason</th>
+                            <th class="px-6 py-3">Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
                         @foreach (var u in Model)
                         {
-                            var name = u.Referee?.UserName ?? u.Referee?.Email ?? u.RefereeId;
-                            <tr>
-                                <td>@name</td>
-                                <td>@u.StartDate.ToString("yyyy-MM-dd")</td>
-                                <td>@u.EndDate.ToString("yyyy-MM-dd")</td>
-                                <td>@(u.Reason ?? "—")</td>
+                            var name = u.Referee?.DisplayName ?? u.Referee?.UserName ?? u.Referee?.Email ?? u.RefereeId;
+                            <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                                <td class="px-6 py-4 font-medium">@name</td>
+                                <td class="px-6 py-4 text-sm">@u.StartDate.ToString("yyyy-MM-dd")</td>
+                                <td class="px-6 py-4 text-sm">@u.EndDate.ToString("yyyy-MM-dd")</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@(u.Reason ?? "—")</td>
+                                <td class="px-6 py-4">
+                                    <span class="btn-unavailable text-white px-3 py-1 rounded-lg text-xs font-medium inline-flex items-center space-x-1.5">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                        </svg>
+                                        <span>Unavailable</span>
+                                    </span>
+                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
         }
-    </div>
+    </section>
+
 </main>

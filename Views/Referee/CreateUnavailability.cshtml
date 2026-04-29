@@ -3,33 +3,51 @@
     ViewData["Title"] = "Add Unavailability";
 }
 
-<main class="page">
-    <h1 class="section-title">Add Unavailability</h1>
-    <form asp-action="CreateUnavailability" method="post" class="form-card form-grid">
-        <div asp-validation-summary="All" class="validation"></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
-        <div>
-            <label asp-for="StartDate"></label>
-            <input asp-for="StartDate" type="date" />
-            <span asp-validation-for="StartDate" class="validation"></span>
-        </div>
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Add Unavailability</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Referee" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span>
+            <a asp-controller="Referee" asp-action="MyAvailability" class="hover:text-gray-600">My Availability</a>
+            <span class="mx-1">•</span><span>Add</span>
+        </nav>
+    </div>
 
-        <div>
-            <label asp-for="EndDate"></label>
-            <input asp-for="EndDate" type="date" />
-            <span asp-validation-for="EndDate" class="validation"></span>
-        </div>
+    <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
+        <form asp-action="CreateUnavailability" method="post" class="space-y-5">
+            <div asp-validation-summary="All" class="validation"></div>
 
-        <div>
-            <label asp-for="Reason">Reason (optional)</label>
-            <input asp-for="Reason" placeholder="e.g. Vacation, injury" />
-        </div>
+            <div class="space-y-1.5">
+                <label asp-for="StartDate" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="StartDate" type="date"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="StartDate" class="validation"></span>
+            </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Add</button>
-            <a asp-action="MyAvailability" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="space-y-1.5">
+                <label asp-for="EndDate" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="EndDate" type="date"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="EndDate" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="Reason" class="block text-sm font-medium text-gray-700">Reason (optional)</label>
+                <input asp-for="Reason" placeholder="e.g. Vacation, injury"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Add</button>
+                <a asp-action="MyAvailability"
+                   class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
+            </div>
+        </form>
+    </section>
+
 </main>
 
 @section Scripts {

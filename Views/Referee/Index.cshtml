@@ -2,23 +2,55 @@
     ViewData["Title"] = "Referee Dashboard";
 }
 
-<main class="page">
-    <div class="page-header">
+<main class="max-w-[1440px] mx-auto p-8 grid grid-cols-12 gap-8">
+
+    <!-- Left Column -->
+    <div class="col-span-12 lg:col-span-9 space-y-8">
+
         <div>
-            <div class="page-eyebrow">Dashboard · Referee</div>
-            <h1 class="page-title">My <em>Workspace</em></h1>
+            <h1 class="text-2xl font-bold text-gray-900">My Workspace</h1>
+            <nav class="text-sm text-gray-400 mt-0.5">
+                <span>Dashboard</span>
+                <span class="mx-1">•</span>
+                <span>Referee</span>
+            </nav>
         </div>
+
+        <!-- Info Card -->
+        <div class="bg-white rounded-xl card-shadow p-6 border-l-4 border-sky-400">
+            <p class="text-gray-600 text-sm leading-relaxed">
+                Welcome to your referee workspace. Use the quick actions to view your upcoming match assignments or manage your availability dates. Keep your unavailability up to date so the board can assign you to the right matches.
+            </p>
+        </div>
+
     </div>
-    <div class="content-grid">
-        <div>
-            <div class="panel">
-                <div class="panel-header"><span class="panel-title">Quick Access</span></div>
-                <div class="panel-body actions">
-                    <a asp-controller="Referee" asp-action="MyMatches" class="btn btn-primary">My Matches</a>
-                    <a asp-controller="Referee" asp-action="MyAvailability" class="btn btn-secondary">My Availability</a>
-                </div>
+
+    <!-- Sidebar -->
+    <aside class="col-span-12 lg:col-span-3">
+        <section class="bg-white rounded-xl card-shadow p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+            <div class="flex flex-col space-y-4">
+                <a asp-controller="Referee" asp-action="MyMatches"
+                   class="action-btn-outline w-full py-4 px-4 rounded-xl flex items-center space-x-4 text-left group">
+                    <div class="p-1 rounded-md bg-gray-50 group-hover:bg-white border border-gray-100">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <span class="font-medium text-gray-600">My Matches</span>
+                </a>
+
+                <a asp-controller="Referee" asp-action="MyAvailability"
+                   class="action-btn-outline w-full py-4 px-4 rounded-xl flex items-center space-x-4 text-left group">
+                    <div class="p-1 rounded-md bg-gray-50 group-hover:bg-white border border-gray-100">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <span class="font-medium text-gray-600">My Availability</span>
+                </a>
             </div>
-            <p class="muted">Tip: keep your unavailability up to date so the board can assign you to the right matches.</p>
-        </div>
-    </div>
+        </section>
+    </aside>
+
 </main>

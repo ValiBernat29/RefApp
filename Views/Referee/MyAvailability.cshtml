@@ -3,42 +3,64 @@
     ViewData["Title"] = "My Availability";
 }
 
-<main class="page">
-    <h1 class="section-title">My Availability</h1>
-    <div class="toolbar"><div></div><a asp-action="CreateUnavailability" class="btn btn-primary">Add Unavailability</a></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
+
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">My Availability</h1>
+            <nav class="text-sm text-gray-400 mt-0.5">
+                <a asp-controller="Referee" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+                <span class="mx-1">•</span><span>My Availability</span>
+            </nav>
+        </div>
+        <a asp-action="CreateUnavailability"
+           class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center space-x-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            </svg>
+            <span>Add Unavailability</span>
+        </a>
+    </div>
 
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
     }
 
-    <div class="panel">
+    <section class="bg-white rounded-xl card-shadow overflow-hidden">
         @if (!Model.Any())
         {
-            <div class="panel-body"><p class="muted">No blocked dates. <a asp-action="CreateUnavailability">Add unavailability</a>.</p></div>
+            <div class="px-6 py-12 text-center text-gray-400 text-sm">
+                No blocked dates.
+                <a asp-action="CreateUnavailability" class="text-sky-600 hover:underline ml-1">Add unavailability</a>.
+            </div>
         }
         else
         {
-            <div class="table-wrap">
-                <table class="data-table">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
                     <thead>
-                        <tr>
-                            <th>Start</th>
-                            <th>End</th>
-                            <th>Reason</th>
-                            <th>Actions</th>
+                        <tr class="bg-gray-50 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                            <th class="px-6 py-3">Start</th>
+                            <th class="px-6 py-3">End</th>
+                            <th class="px-6 py-3">Reason</th>
+                            <th class="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
                         @foreach (var u in Model)
                         {
-                            <tr>
-                                <td>@u.StartDate.ToString("yyyy-MM-dd")</td>
-                                <td>@u.EndDate.ToString("yyyy-MM-dd")</td>
-                                <td>@(u.Reason ?? "—")</td>
-                                <td class="actions">
-                                    <a asp-action="EditUnavailability" asp-route-id="@u.Id" class="btn btn-sm btn-secondary">Edit</a>
-                                    <a asp-action="DeleteUnavailability" asp-route-id="@u.Id" class="btn btn-sm btn-danger">Delete</a>
+                            <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                                <td class="px-6 py-4 text-sm">@u.StartDate.ToString("yyyy-MM-dd")</td>
+                                <td class="px-6 py-4 text-sm">@u.EndDate.ToString("yyyy-MM-dd")</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">@(u.Reason ?? "—")</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <a asp-action="EditUnavailability" asp-route-id="@u.Id"
+                                           class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>
+                                        <a asp-action="DeleteUnavailability" asp-route-id="@u.Id"
+                                           class="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">Delete</a>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -46,5 +68,6 @@
                 </table>
             </div>
         }
-    </div>
+    </section>
+
 </main>

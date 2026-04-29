@@ -22,5 +22,10 @@ public class RefereeOption
     public string Email { get; set; } = string.Empty;
 
     public bool IsUnavailable { get; set; }
+
+    /// <summary>Same day AND same hour as this match → hard block.</summary>
+    public bool HasConflictingMatch { get; set; }
+
+    /// <summary>Same day but different hour → soft warning only.</summary>
     public bool HasOtherMatchThatDay { get; set; }
 }

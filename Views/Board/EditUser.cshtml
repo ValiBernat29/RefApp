@@ -3,43 +3,62 @@
     ViewData["Title"] = "Edit Account";
 }
 
-<main class="page">
-    <h1 class="section-title">Edit Account</h1>
-    <form asp-action="EditUser" method="post" class="form-card form-grid">
-        <input type="hidden" asp-for="Id" />
-        <div asp-validation-summary="All" class="alert alert-error" role="alert"></div>
+<main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
-        <div>
-            <label asp-for="UserName"></label>
-            <input asp-for="UserName" />
-            <span asp-validation-for="UserName" class="validation"></span>
-        </div>
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Edit Account</h1>
+        <nav class="text-sm text-gray-400 mt-0.5">
+            <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+            <span class="mx-1">•</span>
+            <a asp-controller="Board" asp-action="Users" class="hover:text-gray-600">Users</a>
+            <span class="mx-1">•</span><span>Edit</span>
+        </nav>
+    </div>
 
-        <div>
-            <label asp-for="DisplayName">Display Name (Optional)</label>
-            <input asp-for="DisplayName" placeholder="e.g. John Doe" />
-            <span asp-validation-for="DisplayName" class="validation"></span>
-        </div>
+    <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
+        <form asp-action="EditUser" method="post" class="space-y-5">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="All" class="alert alert-error" role="alert"></div>
 
-        <div>
-            <label asp-for="Role"></label>
-            <select asp-for="Role">
-                <option value="Referee">Referee</option>
-                <option value="Board">Board</option>
-            </select>
-            <span asp-validation-for="Role" class="validation"></span>
-        </div>
+            <div class="space-y-1.5">
+                <label asp-for="UserName" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="UserName"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="UserName" class="validation"></span>
+            </div>
 
-        <div>
-            <label asp-for="NewPassword"></label>
-            <input asp-for="NewPassword" type="password" placeholder="Leave blank to keep current password" />
-            <span asp-validation-for="NewPassword" class="validation"></span>
-            <p class="muted">Only fill this out if you want to force a password change.</p>
-        </div>
+            <div class="space-y-1.5">
+                <label asp-for="DisplayName" class="block text-sm font-medium text-gray-700">Display Name (Optional)</label>
+                <input asp-for="DisplayName" placeholder="e.g. John Doe"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <span asp-validation-for="DisplayName" class="validation"></span>
+            </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a asp-action="Users" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="space-y-1.5">
+                <label asp-for="Role" class="block text-sm font-medium text-gray-700"></label>
+                <select asp-for="Role"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400">
+                    <option value="Referee">Referee</option>
+                    <option value="Board">Board</option>
+                </select>
+                <span asp-validation-for="Role" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="NewPassword" class="block text-sm font-medium text-gray-700"></label>
+                <input asp-for="NewPassword" type="password" placeholder="Leave blank to keep current password"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <p class="text-xs text-gray-400">Only fill this out if you want to force a password change.</p>
+                <span asp-validation-for="NewPassword" class="validation"></span>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Changes</button>
+                <a asp-action="Users"
+                   class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
+            </div>
+        </form>
+    </section>
+
 </main>

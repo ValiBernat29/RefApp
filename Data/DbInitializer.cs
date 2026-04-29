@@ -64,6 +64,389 @@ public static class DbInitializer
                 await userManager.AddToRoleAsync(refereeUser, "Referee");
             }
         }
+
+        await SeedL4FixturesAsync(context);
+        await SeedL5AFixturesAsync(context);
+        await SeedL5BFixturesAsync(context);
+        await SeedL5CFixturesAsync(context);
+
+        // Fix any existing matches that have incorrect locations
+        var allMatches = await context.Matches.ToListAsync();
+        foreach (var m in allMatches)
+        {
+            var correctLoc = GetLocation(m.HomeTeam);
+            if (m.Location != correctLoc && m.Location != "TBD")
+            {
+                m.Location = correctLoc;
+            }
+        }
+        await context.SaveChangesAsync();
+    }
+
+    private static string GetLocation(string homeTeam)
+    {
+        return homeTeam switch
+        {
+            "Viitorul Satu Nou" => "Satu Nou",
+            "Crișul Alb Buteni" => "Buteni",
+            "Viitorul Olimpia Bârzava" => "Bârzava",
+            "Foresta Oil Sânpetru German" => "Sânpetru German",
+            "Team United Sânpaul" => "Sânpaul",
+            _ => homeTeam.Split(' ').Length > 1 ? homeTeam.Split(' ')[1] : homeTeam
+        };
+    }
+
+    private static async Task SeedL4FixturesAsync(ApplicationDbContext context)
+    {
+        // ── Teams ─────────────────────────────────────────────────────────────
+        var teamNames = new[]
+        {
+            "CS Socodor", "Athletico Vinga", "Național Sebiș", "CS Vladimirescu",
+            "Victoria Felnac", "Șoimii Șimand", "Podgoria Pâncota", "Victoria Nădlac",
+            "Olimpia Bocsig", "Frontiera Curtici", "Șiriana Șiria", "Progresul Pecica II",
+            "Voința Macea"
+        };
+
+        var existingTeamNames = context.Teams
+            .Where(t => t.League == League.L4)
+            .Select(t => t.Name)
+            .ToHashSet();
+
+        foreach (var name in teamNames)
+        {
+            if (!existingTeamNames.Contains(name))
+            {
+                context.Teams.Add(new Team
+                {
+                    Name = name,
+                    League = League.L4,
+                    PreferredMatchDay = DayOfWeek.Saturday
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        // ── Fixtures from program_meciuri_fotbal.csv ───────────────────────────
+        // Format: (HomeTeam, AwayTeam, MatchDate ISO)
+        var fixtures = new (string Home, string Away, DateTime Date)[]
+        {
+            // Etapa 21 – 02.05.2026
+            ("CS Socodor",          "Athletico Vinga",        new DateTime(2026, 5,  2, 17, 0, 0)),
+            ("Național Sebiș",      "CS Vladimirescu",        new DateTime(2026, 5,  2, 17, 0, 0)),
+            ("Victoria Felnac",     "Șoimii Șimand",          new DateTime(2026, 5,  2, 17, 0, 0)),
+            ("Podgoria Pâncota",    "Victoria Nădlac",        new DateTime(2026, 5,  2, 17, 0, 0)),
+            ("Olimpia Bocsig",      "Frontiera Curtici",      new DateTime(2026, 5,  2, 17, 0, 0)),
+            ("Șiriana Șiria",       "Progresul Pecica II",    new DateTime(2026, 5,  2, 17, 0, 0)),
+
+            // Etapa 22 – 09.05.2026
+            ("Progresul Pecica II", "Victoria Felnac",        new DateTime(2026, 5,  9, 17, 0, 0)),
+            ("Victoria Nădlac",     "Național Sebiș",         new DateTime(2026, 5,  9, 17, 0, 0)),
+            ("Frontiera Curtici",   "Șiriana Șiria",          new DateTime(2026, 5,  9, 17, 0, 0)),
+            ("CS Vladimirescu",     "Voința Macea",           new DateTime(2026, 5,  9, 17, 0, 0)),
+            ("Șoimii Șimand",       "Podgoria Pâncota",       new DateTime(2026, 5,  9, 17, 0, 0)),
+            ("Athletico Vinga",     "Olimpia Bocsig",         new DateTime(2026, 5,  9, 17, 0, 0)),
+
+            // Etapa 23 – 16.05.2026
+            ("Victoria Felnac",     "Frontiera Curtici",      new DateTime(2026, 5, 16, 17, 0, 0)),
+            ("Olimpia Bocsig",      "CS Socodor",             new DateTime(2026, 5, 16, 17, 0, 0)),
+            ("Șiriana Șiria",       "Athletico Vinga",        new DateTime(2026, 5, 16, 17, 0, 0)),
+            ("Național Sebiș",      "Șoimii Șimand",          new DateTime(2026, 5, 16, 17, 0, 0)),
+            ("Podgoria Pâncota",    "Progresul Pecica II",    new DateTime(2026, 5, 16, 17, 0, 0)),
+            ("Voința Macea",        "Victoria Nădlac",        new DateTime(2026, 5, 16, 17, 0, 0)),
+
+            // Etapa 24 – 23.05.2026
+            ("CS Socodor",          "Șiriana Șiria",          new DateTime(2026, 5, 23, 17, 0, 0)),
+            ("Athletico Vinga",     "Victoria Felnac",        new DateTime(2026, 5, 23, 17, 0, 0)),
+            ("Frontiera Curtici",   "Podgoria Pâncota",       new DateTime(2026, 5, 23, 17, 0, 0)),
+            ("Victoria Nădlac",     "CS Vladimirescu",        new DateTime(2026, 5, 23, 17, 0, 0)),
+            ("Progresul Pecica II", "Național Sebiș",         new DateTime(2026, 5, 23, 17, 0, 0)),
+            ("Șoimii Șimand",       "Voința Macea",           new DateTime(2026, 5, 23, 17, 0, 0)),
+
+            // Etapa 25 – 30.05.2026
+            ("Victoria Felnac",     "CS Socodor",             new DateTime(2026, 5, 30, 17, 0, 0)),
+            ("Șiriana Șiria",       "Olimpia Bocsig",         new DateTime(2026, 5, 30, 17, 0, 0)),
+            ("Podgoria Pâncota",    "Athletico Vinga",        new DateTime(2026, 5, 30, 17, 0, 0)),
+            ("Național Sebiș",      "Frontiera Curtici",      new DateTime(2026, 5, 30, 17, 0, 0)),
+            ("CS Vladimirescu",     "Șoimii Șimand",          new DateTime(2026, 5, 30, 17, 0, 0)),
+            ("Voința Macea",        "Progresul Pecica II",    new DateTime(2026, 5, 30, 17, 0, 0)),
+
+            // Etapa 26 – 06.06.2026
+            ("Olimpia Bocsig",      "Victoria Felnac",        new DateTime(2026, 6,  6, 17, 0, 0)),
+            ("CS Socodor",          "Podgoria Pâncota",       new DateTime(2026, 6,  6, 17, 0, 0)),
+            ("Athletico Vinga",     "Național Sebiș",         new DateTime(2026, 6,  6, 17, 0, 0)),
+            ("Șoimii Șimand",       "Victoria Nădlac",        new DateTime(2026, 6,  6, 17, 0, 0)),
+            ("Frontiera Curtici",   "Voința Macea",           new DateTime(2026, 6,  6, 17, 0, 0)),
+            ("Progresul Pecica II", "CS Vladimirescu",        new DateTime(2026, 6,  6, 17, 0, 0)),
+        };
+
+        // ── Fix any existing fixtures that still have "TBD" as location ──────
+        var tbd = context.Matches.Where(m => m.Location == "TBD").ToList();
+        foreach (var m in tbd)
+        {
+            m.Location = GetLocation(m.HomeTeam);
+        }
+        await context.SaveChangesAsync();
+
+        // ── Insert new fixtures (idempotent) ──────────────────────────────────
+        foreach (var (home, away, date) in fixtures)
+        {
+            bool alreadyExists = context.Matches.Any(m =>
+                m.HomeTeam == home &&
+                m.AwayTeam == away &&
+                m.MatchDate == date);
+
+            if (!alreadyExists)
+            {
+                context.Matches.Add(new Match
+                {
+                    HomeTeam = home,
+                    AwayTeam = away,
+                    MatchDate = date,
+                    Location = GetLocation(home)
+                });
+            }
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedL5AFixturesAsync(ApplicationDbContext context)
+    {
+        var teamNames = new[]
+        {
+            "Viitorul Pereg", "Olimpia Bujac", "Foresta Oil Sânpetru German",
+            "ACS Sâmbăteni", "Voința Mailat", "Unirea Șeitin", "Mureșul Zădăreni",
+            "Șoimii Livada", "Gloria Secusigiu", "Team United Sânpaul", "Banatul Arad"
+        };
+
+        var existingTeamNames = context.Teams
+            .Where(t => t.League == League.L5A)
+            .Select(t => t.Name)
+            .ToHashSet();
+
+        foreach (var name in teamNames)
+        {
+            if (!existingTeamNames.Contains(name))
+            {
+                context.Teams.Add(new Team
+                {
+                    Name = name,
+                    League = League.L5A,
+                    PreferredMatchDay = DayOfWeek.Sunday
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        var fixtures = new (string Home, string Away, DateTime Date)[]
+        {
+            ("Viitorul Pereg", "Olimpia Bujac", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Foresta Oil Sânpetru German", "ACS Sâmbăteni", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Voința Mailat", "Unirea Șeitin", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Mureșul Zădăreni", "Șoimii Livada", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Gloria Secusigiu", "Team United Sânpaul", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Olimpia Bujac", "Banatul Arad", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("ACS Sâmbăteni", "Viitorul Pereg", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Unirea Șeitin", "Gloria Secusigiu", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Șoimii Livada", "Foresta Oil Sânpetru German", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Team United Sânpaul", "Mureșul Zădăreni", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Voința Mailat", "Olimpia Bujac", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Mureșul Zădăreni", "Unirea Șeitin", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Viitorul Pereg", "Foresta Oil Sânpetru German", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Banatul Arad", "ACS Sâmbăteni", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Team United Sânpaul", "Șoimii Livada", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Olimpia Bujac", "Gloria Secusigiu", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Unirea Șeitin", "Team United Sânpaul", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Foresta Oil Sânpetru German", "Banatul Arad", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("ACS Sâmbăteni", "Voința Mailat", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Șoimii Livada", "Viitorul Pereg", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Mureșul Zădăreni", "Olimpia Bujac", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Banatul Arad", "Viitorul Pereg", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Unirea Șeitin", "Șoimii Livada", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Voința Mailat", "Foresta Oil Sânpetru German", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Gloria Secusigiu", "ACS Sâmbăteni", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Olimpia Bujac", "Team United Sânpaul", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("ACS Sâmbăteni", "Mureșul Zădăreni", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Viitorul Pereg", "Voința Mailat", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Foresta Oil Sânpetru German", "Gloria Secusigiu", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Șoimii Livada", "Banatul Arad", new DateTime(2026, 06, 06, 18, 00, 0)),
+        };
+
+        foreach (var (home, away, date) in fixtures)
+        {
+            bool alreadyExists = context.Matches.Any(m =>
+                m.HomeTeam == home && m.AwayTeam == away && m.MatchDate == date);
+
+            if (!alreadyExists)
+            {
+                context.Matches.Add(new Match
+                {
+                    HomeTeam = home,
+                    AwayTeam = away,
+                    MatchDate = date,
+                    Location = GetLocation(home)
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedL5BFixturesAsync(ApplicationDbContext context)
+    {
+        var teamNames = new[]
+        {
+            "Cetate Săvârșin", "Avântul Târnova", "Viitorul Olimpia Bârzava",
+            "CS Șofronea", "Real Horia", "FC Sântana", "Spicul Olari",
+            "Podgoria Ghioroc", "Frontiera Pilu", "Unirea Sântana II"
+        };
+
+        var existingTeamNames = context.Teams
+            .Where(t => t.League == League.L5B)
+            .Select(t => t.Name)
+            .ToHashSet();
+
+        foreach (var name in teamNames)
+        {
+            if (!existingTeamNames.Contains(name))
+            {
+                context.Teams.Add(new Team
+                {
+                    Name = name,
+                    League = League.L5B,
+                    PreferredMatchDay = DayOfWeek.Sunday
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        var fixtures = new (string Home, string Away, DateTime Date)[]
+        {
+            ("Cetate Săvârșin", "Avântul Târnova", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Viitorul Olimpia Bârzava", "CS Șofronea", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Real Horia", "FC Sântana", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Spicul Olari", "Podgoria Ghioroc", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Frontiera Pilu", "Unirea Sântana II", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Avântul Târnova", "Real Horia", new DateTime(2026, 05, 09, 17, 00, 0)),
+            ("Podgoria Ghioroc", "Cetate Săvârșin", new DateTime(2026, 05, 09, 17, 00, 0)),
+            ("CS Șofronea", "Spicul Olari", new DateTime(2026, 05, 09, 17, 00, 0)),
+            ("Unirea Sântana II", "Viitorul Olimpia Bârzava", new DateTime(2026, 05, 09, 17, 00, 0)),
+            ("FC Sântana", "Frontiera Pilu", new DateTime(2026, 05, 09, 17, 00, 0)),
+            ("Cetate Săvârșin", "CS Șofronea", new DateTime(2026, 05, 16, 17, 00, 0)),
+            ("Spicul Olari", "Viitorul Olimpia Bârzava", new DateTime(2026, 05, 16, 17, 00, 0)),
+            ("Frontiera Pilu", "Avântul Târnova", new DateTime(2026, 05, 16, 17, 00, 0)),
+            ("Real Horia", "Podgoria Ghioroc", new DateTime(2026, 05, 16, 17, 00, 0)),
+            ("FC Sântana", "Unirea Sântana II", new DateTime(2026, 05, 16, 17, 00, 0)),
+            ("Viitorul Olimpia Bârzava", "Cetate Săvârșin", new DateTime(2026, 05, 23, 17, 00, 0)),
+            ("Avântul Târnova", "FC Sântana", new DateTime(2026, 05, 23, 17, 00, 0)),
+            ("CS Șofronea", "Real Horia", new DateTime(2026, 05, 23, 17, 00, 0)),
+            ("Unirea Sântana II", "Spicul Olari", new DateTime(2026, 05, 23, 17, 00, 0)),
+            ("Podgoria Ghioroc", "Frontiera Pilu", new DateTime(2026, 05, 23, 17, 00, 0)),
+        };
+
+        foreach (var (home, away, date) in fixtures)
+        {
+            bool alreadyExists = context.Matches.Any(m =>
+                m.HomeTeam == home && m.AwayTeam == away && m.MatchDate == date);
+
+            if (!alreadyExists)
+            {
+                context.Matches.Add(new Match
+                {
+                    HomeTeam = home,
+                    AwayTeam = away,
+                    MatchDate = date,
+                    Location = GetLocation(home)
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedL5CFixturesAsync(ApplicationDbContext context)
+    {
+        var teamNames = new[]
+        {
+            "Voința Sintea Mare", "Victoria Ineu", "Șoimii Archiș", "Viitorul Șepreuș",
+            "Crișul Alb Buteni", "Progresul Hălmagiu", "Viitorul Satu Nou", "Cetate Dezna",
+            "Recolta Apateu", "ACS Vârfurile", "Unirea Gurahonț", "Flacăra Țipar"
+        };
+
+        var existingTeamNames = context.Teams
+            .Where(t => t.League == League.L5C)
+            .Select(t => t.Name)
+            .ToHashSet();
+
+        foreach (var name in teamNames)
+        {
+            if (!existingTeamNames.Contains(name))
+            {
+                context.Teams.Add(new Team
+                {
+                    Name = name,
+                    League = League.L5C,
+                    PreferredMatchDay = DayOfWeek.Sunday
+                });
+            }
+        }
+        await context.SaveChangesAsync();
+
+        var fixtures = new (string Home, string Away, DateTime Date)[]
+        {
+            ("Voința Sintea Mare", "Victoria Ineu", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Șoimii Archiș", "Viitorul Șepreuș", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Crișul Alb Buteni", "Progresul Hălmagiu", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Viitorul Satu Nou", "Cetate Dezna", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Recolta Apateu", "ACS Vârfurile", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Unirea Gurahonț", "Flacăra Țipar", new DateTime(2026, 05, 02, 17, 00, 0)),
+            ("Victoria Ineu", "Crișul Alb Buteni", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Viitorul Șepreuș", "Recolta Apateu", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Progresul Hălmagiu", "Șoimii Archiș", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Flacăra Țipar", "Viitorul Satu Nou", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("ACS Vârfurile", "Unirea Gurahonț", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Cetate Dezna", "Voința Sintea Mare", new DateTime(2026, 05, 09, 18, 00, 0)),
+            ("Șoimii Archiș", "Victoria Ineu", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Unirea Gurahonț", "Viitorul Șepreuș", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Recolta Apateu", "Progresul Hălmagiu", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Flacăra Țipar", "Cetate Dezna", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Viitorul Satu Nou", "ACS Vârfurile", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Crișul Alb Buteni", "Voința Sintea Mare", new DateTime(2026, 05, 16, 18, 00, 0)),
+            ("Victoria Ineu", "Recolta Apateu", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Viitorul Șepreuș", "Viitorul Satu Nou", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Progresul Hălmagiu", "Unirea Gurahonț", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Cetate Dezna", "Crișul Alb Buteni", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("ACS Vârfurile", "Flacăra Țipar", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Voința Sintea Mare", "Șoimii Archiș", new DateTime(2026, 05, 23, 18, 00, 0)),
+            ("Unirea Gurahonț", "Victoria Ineu", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Flacăra Țipar", "Viitorul Șepreuș", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Viitorul Satu Nou", "Progresul Hălmagiu", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Recolta Apateu", "Voința Sintea Mare", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Șoimii Archiș", "Crișul Alb Buteni", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("ACS Vârfurile", "Cetate Dezna", new DateTime(2026, 05, 30, 18, 00, 0)),
+            ("Victoria Ineu", "Viitorul Satu Nou", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Crișul Alb Buteni", "Recolta Apateu", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Viitorul Șepreuș", "ACS Vârfurile", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Cetate Dezna", "Șoimii Archiș", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Progresul Hălmagiu", "Flacăra Țipar", new DateTime(2026, 06, 06, 18, 00, 0)),
+            ("Voința Sintea Mare", "Unirea Gurahonț", new DateTime(2026, 06, 06, 18, 00, 0)),
+        };
+
+        foreach (var (home, away, date) in fixtures)
+        {
+            bool alreadyExists = context.Matches.Any(m =>
+                m.HomeTeam == home && m.AwayTeam == away && m.MatchDate == date);
+
+            if (!alreadyExists)
+            {
+                context.Matches.Add(new Match
+                {
+                    HomeTeam = home,
+                    AwayTeam = away,
+                    MatchDate = date,
+                    Location = GetLocation(home)
+                });
+            }
+        }
+        await context.SaveChangesAsync();
     }
 }
 
