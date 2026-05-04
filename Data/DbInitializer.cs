@@ -77,15 +77,13 @@ public static class DbInitializer
         await SeedL5BFixturesAsync(context);
         await SeedL5CFixturesAsync(context);
 
-        // Fix any existing matches that have incorrect locations
+        // Sync all match locations to the home team's City (set by the board)
         var allMatches = await context.Matches.Include(m => m.HomeTeam).ToListAsync();
         foreach (var m in allMatches)
         {
-            var correctLoc = GetLocation(m.HomeTeam?.Name ?? "");
-            if (m.Location != correctLoc && m.Location != "TBD")
-            {
+            var correctLoc = m.HomeTeam?.City ?? m.HomeTeam?.Name ?? m.Location;
+            if (m.Location != correctLoc)
                 m.Location = correctLoc;
-            }
         }
         await context.SaveChangesAsync();
 

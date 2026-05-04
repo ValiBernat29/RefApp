@@ -268,7 +268,7 @@ public class BoardController : Controller
         var match = new Match
         {
             MatchDate = model.MatchDate,
-            Location = model.Location,
+            Location = home.City ?? home.Name,
             HomeTeamId = home.Id,
             AwayTeamId = away.Id
         };
@@ -377,7 +377,7 @@ public class BoardController : Controller
         }
 
         match.MatchDate = model.MatchDate;
-        match.Location = model.Location;
+        match.Location = home.City ?? home.Name;
         match.HomeTeamId = home.Id;
         match.AwayTeamId = away.Id;
 
