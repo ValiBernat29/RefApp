@@ -44,11 +44,18 @@ public static class DbInitializer
         if (context.Database.IsSqlServer())
         {
             // Unconditional safety net: ensure Rank column exists and has no NULLs.
-            // Runs every startup but is cheap (UPDATE touches 0 rows when already correct).
+            // Also make old HomeTeam/AwayTeam string columns nullable so EF inserts
+            // (which omit those columns) don't fail the NOT NULL constraint.
             await context.Database.ExecuteSqlRawAsync(@"
                 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'Rank')
                     ALTER TABLE [AspNetUsers] ADD [Rank] int NULL;
                 UPDATE [AspNetUsers] SET [Rank] = 0 WHERE [Rank] IS NULL;
+
+                IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Matches') AND name = 'HomeTeam')
+                BEGIN
+                    ALTER TABLE [Matches] ALTER COLUMN [HomeTeam] nvarchar(200) NULL;
+                    ALTER TABLE [Matches] ALTER COLUMN [AwayTeam] nvarchar(200) NULL;
+                END
             ");
         }
 

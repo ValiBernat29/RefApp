@@ -85,7 +85,8 @@ try
 }
 catch (Exception ex)
 {
-    app.MapGet("/", () => $"STARTUP ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+    var msg = $"STARTUP ERROR: {ex.Message}\nInner: {ex.InnerException?.Message}\nInner2: {ex.InnerException?.InnerException?.Message}\n\nStackTrace:\n{ex.StackTrace}\n\nInner StackTrace:\n{ex.InnerException?.StackTrace}";
+    app.MapGet("/", () => msg);
     app.Run();
     return;
 }
