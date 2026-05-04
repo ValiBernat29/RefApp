@@ -41,6 +41,17 @@ public static class DbInitializer
         // Apply any pending migrations (adds new columns, creates new tables, etc.)
         await context.Database.MigrateAsync();
 
+        if (context.Database.IsSqlServer())
+        {
+            // Unconditional safety net: ensure Rank column exists and has no NULLs.
+            // Runs every startup but is cheap (UPDATE touches 0 rows when already correct).
+            await context.Database.ExecuteSqlRawAsync(@"
+                IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'Rank')
+                    ALTER TABLE [AspNetUsers] ADD [Rank] int NULL;
+                UPDATE [AspNetUsers] SET [Rank] = 0 WHERE [Rank] IS NULL;
+            ");
+        }
+
         string[] roleNames = { "Board", "Referee" };
 
         foreach (var roleName in roleNames)
