@@ -257,10 +257,13 @@ public static class DbInitializer
 
         // ── Fix any existing fixtures that still have "TBD" as location ──────
         var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
-        var tbd = context.Matches.Include(m => m.HomeTeam).Where(m => m.Location == "TBD").ToList();
+        var tbd = await context.Matches.Include(m => m.HomeTeam).Where(m => m.Location == "TBD").ToListAsync();
         foreach (var m in tbd)
         {
-            m.Location = GetLocation(m.HomeTeam?.Name ?? "");
+            // Use the manual City you entered, fallback to hardcoded guess only if empty
+            m.Location = !string.IsNullOrEmpty(m.HomeTeam?.City) 
+                ? m.HomeTeam.City 
+                : GetLocation(m.HomeTeam?.Name ?? "");
         }
         await context.SaveChangesAsync();
 
