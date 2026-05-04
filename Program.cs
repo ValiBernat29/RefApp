@@ -54,7 +54,16 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    // TEMPORARY: show full error details to diagnose production 500
+    app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
+    {
+        var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        ctx.Response.ContentType = "text/plain";
+        ctx.Response.StatusCode = 500;
+        await ctx.Response.WriteAsync(
+            $"REQUEST ERROR:\n{ex?.Error?.GetType().Name}: {ex?.Error?.Message}\n\n{ex?.Error?.StackTrace}" +
+            $"\n\nInner: {ex?.Error?.InnerException?.Message}\n{ex?.Error?.InnerException?.StackTrace}");
+    }));
     app.UseHsts();
 }
 
