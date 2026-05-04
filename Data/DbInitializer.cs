@@ -78,10 +78,10 @@ public static class DbInitializer
         await SeedL5CFixturesAsync(context);
 
         // Fix any existing matches that have incorrect locations
-        var allMatches = await context.Matches.ToListAsync();
+        var allMatches = await context.Matches.Include(m => m.HomeTeam).ToListAsync();
         foreach (var m in allMatches)
         {
-            var correctLoc = GetLocation(m.HomeTeam);
+            var correctLoc = GetLocation(m.HomeTeam?.Name ?? "");
             if (m.Location != correctLoc && m.Location != "TBD")
             {
                 m.Location = correctLoc;
@@ -187,10 +187,11 @@ public static class DbInitializer
         };
 
         // ── Fix any existing fixtures that still have "TBD" as location ──────
-        var tbd = context.Matches.Where(m => m.Location == "TBD").ToList();
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
+        var tbd = context.Matches.Include(m => m.HomeTeam).Where(m => m.Location == "TBD").ToList();
         foreach (var m in tbd)
         {
-            m.Location = GetLocation(m.HomeTeam);
+            m.Location = GetLocation(m.HomeTeam?.Name ?? "");
         }
         await context.SaveChangesAsync();
 
@@ -198,16 +199,16 @@ public static class DbInitializer
         foreach (var (home, away, date) in fixtures)
         {
             bool alreadyExists = context.Matches.Any(m =>
-                m.HomeTeam == home &&
-                m.AwayTeam == away &&
+                m.HomeTeamId == teamDict[home] &&
+                m.AwayTeamId == teamDict[away] &&
                 m.MatchDate == date);
 
             if (!alreadyExists)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
@@ -279,6 +280,7 @@ public static class DbInitializer
             ("Șoimii Livada", "Banatul Arad", new DateTime(2026, 06, 06, 18, 00, 0)),
         };
 
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
         var saturdayTeams = new[] { "Olimpia Bujac", "ACS Sâmbăteni", "Voința Mailat", "Mureșul Zădăreni" };
 
         foreach (var (home, away, originalDate) in fixtures)
@@ -290,14 +292,14 @@ public static class DbInitializer
             }
 
             var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
-                m.HomeTeam == home && m.AwayTeam == away);
+                m.HomeTeamId == teamDict[home] && m.AwayTeamId == teamDict[away]);
 
             if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
@@ -365,6 +367,7 @@ public static class DbInitializer
             ("Podgoria Ghioroc", "Frontiera Pilu", new DateTime(2026, 05, 23, 17, 00, 0)),
         };
 
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
         var saturdayTeams = new[] { "FC Sântana", "Podgoria Ghioroc", "Real Horia" };
 
         foreach (var (home, away, originalDate) in fixtures)
@@ -376,14 +379,14 @@ public static class DbInitializer
             }
 
             var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
-                m.HomeTeam == home && m.AwayTeam == away);
+                m.HomeTeamId == teamDict[home] && m.AwayTeamId == teamDict[away]);
 
             if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
@@ -467,6 +470,7 @@ public static class DbInitializer
             ("Voința Sintea Mare", "Unirea Gurahonț", new DateTime(2026, 06, 06, 18, 00, 0)),
         };
 
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
         foreach (var (home, away, originalDate) in fixtures)
         {
             var date = originalDate;
@@ -476,14 +480,14 @@ public static class DbInitializer
             }
 
             var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
-                m.HomeTeam == home && m.AwayTeam == away);
+                m.HomeTeamId == teamDict[home] && m.AwayTeamId == teamDict[away]);
 
             if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });

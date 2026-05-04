@@ -27,5 +27,18 @@ public class Team
     /// </summary>
     [Required]
     public DayOfWeek PreferredMatchDay { get; set; }
+
+    /// <summary>
+    /// City or village where this team's ground is located.
+    /// Used for distance-based referee scoring.
+    /// </summary>
+    [StringLength(100)]
+    public string? City { get; set; }
+
+    /// <summary>Cached geocoded latitude (populated by GeocodingService).</summary>
+    public double? Latitude { get; set; }
+
+    /// <summary>Cached geocoded longitude (populated by GeocodingService).</summary>
+    public double? Longitude { get; set; }
 }
 
