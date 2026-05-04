@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RefApp.Models;
+using RefApp.Services;
 
 namespace RefApp.Areas.Identity.Pages.Account.Manage
 {
@@ -17,13 +18,16 @@ namespace RefApp.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly GeocodingService _geocoding;
 
         public IndexModel(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager,
+            GeocodingService geocoding)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _geocoding = geocoding;
         }
 
         /// <summary>
@@ -59,6 +63,10 @@ namespace RefApp.Areas.Identity.Pages.Account.Manage
             [Phone]
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
+
+            [StringLength(100)]
+            [Display(Name = "Home City / Village")]
+            public string HomeCity { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
@@ -70,7 +78,8 @@ namespace RefApp.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                HomeCity = user.HomeCity
             };
         }
 
@@ -109,6 +118,25 @@ namespace RefApp.Areas.Identity.Pages.Account.Manage
                     StatusMessage = "Unexpected error when trying to set phone number.";
                     return RedirectToPage();
                 }
+            }
+
+            // Save HomeCity and geocode if it changed
+            var newCity = (Input.HomeCity ?? "").Trim();
+            if (user.HomeCity != newCity)
+            {
+                user.HomeCity = newCity;
+                if (!string.IsNullOrEmpty(newCity))
+                {
+                    var coords = await _geocoding.GeocodeAsync(newCity);
+                    user.Latitude  = coords?.Lat;
+                    user.Longitude = coords?.Lon;
+                }
+                else
+                {
+                    user.Latitude = null;
+                    user.Longitude = null;
+                }
+                await _userManager.UpdateAsync(user);
             }
 
             await _signInManager.RefreshSignInAsync(user);

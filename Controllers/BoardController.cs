@@ -6,6 +6,7 @@ using RefApp.Data;
 using RefApp.Models;
 using RefApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
+using RefApp.Services;
 
 namespace RefApp.Controllers;
 
@@ -14,11 +15,19 @@ public class BoardController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly GeocodingService _geocoding;
+    private readonly RefereeScoringService _scoring;
 
-    public BoardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public BoardController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        GeocodingService geocoding,
+        RefereeScoringService scoring)
     {
         _context = context;
         _userManager = userManager;
+        _geocoding = geocoding;
+        _scoring = scoring;
     }
 
     private async Task DeleteExpiredUnavailabilitiesAsync(DateTime todayUtcDate, CancellationToken cancellationToken)
@@ -457,6 +466,9 @@ public class BoardController : Controller
             })
             .ToList();
 
+        // Score and sort by suitability (best candidates first)
+        eligible = await _scoring.ScoreAndSortAsync(eligible, match, referees);
+
         var vm = new AssignRefereesViewModel
         {
             MatchId = match.Id,
@@ -742,6 +754,24 @@ public class BoardController : Controller
         team.Name = model.Name ?? "";
         team.League = model.League;
         team.PreferredMatchDay = model.PreferredMatchDay;
+
+        // Geocode city if it changed
+        var newCity = (model.City ?? "").Trim();
+        if (team.City != newCity)
+        {
+            team.City = newCity;
+            if (!string.IsNullOrEmpty(newCity))
+            {
+                var coords = await _geocoding.GeocodeAsync(newCity);
+                team.Latitude  = coords?.Lat;
+                team.Longitude = coords?.Lon;
+            }
+            else
+            {
+                team.Latitude = null;
+                team.Longitude = null;
+            }
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 
