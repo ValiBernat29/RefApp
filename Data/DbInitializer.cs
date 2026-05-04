@@ -15,12 +15,31 @@ public static class DbInitializer
 
         if (context.Database.IsSqlServer())
         {
-            await context.Database.EnsureCreatedAsync();
+            // Ensure the migrations history table exists first
+            await context.Database.ExecuteSqlRawAsync(@"
+                IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '__EFMigrationsHistory')
+                    CREATE TABLE [__EFMigrationsHistory] (
+                        [MigrationId]    nvarchar(150) NOT NULL,
+                        [ProductVersion] nvarchar(32)  NOT NULL,
+                        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+                    );
+            ");
+
+            // If the AspNetUsers table already exists but our consolidated InitialCreate
+            // migration ID is not yet recorded, insert it so EF doesn't try to re-create tables.
+            await context.Database.ExecuteSqlRawAsync(@"
+                IF OBJECT_ID('dbo.AspNetUsers', 'U') IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT 1 FROM [__EFMigrationsHistory]
+                    WHERE [MigrationId] = '20260504200938_InitialCreate'
+                )
+                INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+                VALUES ('20260504200938_InitialCreate', '8.0.0');
+            ");
         }
-        else
-        {
-            await context.Database.MigrateAsync();
-        }
+
+        // Apply any pending migrations (adds new columns, creates new tables, etc.)
+        await context.Database.MigrateAsync();
 
         string[] roleNames = { "Board", "Referee" };
 
