@@ -31,6 +31,10 @@ namespace RefApp.Migrations
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
                     DisplayName = table.Column<string>(type: "TEXT", nullable: true),
+                    Rank = table.Column<int>(type: "INTEGER", nullable: false),
+                    HomeCity = table.Column<string>(type: "TEXT", nullable: true),
+                    Latitude = table.Column<double>(type: "REAL", nullable: true),
+                    Longitude = table.Column<double>(type: "REAL", nullable: true),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -52,22 +56,6 @@ namespace RefApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Matches",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    MatchDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Location = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    HomeTeam = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    AwayTeam = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Matches", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Teams",
                 columns: table => new
                 {
@@ -75,7 +63,10 @@ namespace RefApp.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     League = table.Column<int>(type: "INTEGER", nullable: false),
-                    PreferredMatchDay = table.Column<int>(type: "INTEGER", nullable: false)
+                    PreferredMatchDay = table.Column<int>(type: "INTEGER", nullable: false),
+                    City = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    Latitude = table.Column<double>(type: "REAL", nullable: true),
+                    Longitude = table.Column<double>(type: "REAL", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -211,6 +202,62 @@ namespace RefApp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Matches",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    MatchDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Location = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    HomeTeamId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AwayTeamId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Matches", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Matches_Teams_AwayTeamId",
+                        column: x => x.AwayTeamId,
+                        principalTable: "Teams",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Matches_Teams_HomeTeamId",
+                        column: x => x.HomeTeamId,
+                        principalTable: "Teams",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TeamRefereeRefusals",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TeamId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RefereeId = table.Column<string>(type: "TEXT", nullable: false),
+                    Reason = table.Column<string>(type: "TEXT", nullable: true),
+                    DateRefused = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TeamRefereeRefusals", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TeamRefereeRefusals_AspNetUsers_RefereeId",
+                        column: x => x.RefereeId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TeamRefereeRefusals_Teams_TeamId",
+                        column: x => x.TeamId,
+                        principalTable: "Teams",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MatchAssignments",
                 columns: table => new
                 {
@@ -285,6 +332,26 @@ namespace RefApp.Migrations
                 column: "RefereeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Matches_AwayTeamId",
+                table: "Matches",
+                column: "AwayTeamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Matches_HomeTeamId",
+                table: "Matches",
+                column: "HomeTeamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TeamRefereeRefusals_RefereeId",
+                table: "TeamRefereeRefusals",
+                column: "RefereeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TeamRefereeRefusals_TeamId",
+                table: "TeamRefereeRefusals",
+                column: "TeamId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Unavailabilities_RefereeId",
                 table: "Unavailabilities",
                 column: "RefereeId");
@@ -312,7 +379,7 @@ namespace RefApp.Migrations
                 name: "MatchAssignments");
 
             migrationBuilder.DropTable(
-                name: "Teams");
+                name: "TeamRefereeRefusals");
 
             migrationBuilder.DropTable(
                 name: "Unavailabilities");
@@ -325,6 +392,9 @@ namespace RefApp.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Teams");
         }
     }
 }
