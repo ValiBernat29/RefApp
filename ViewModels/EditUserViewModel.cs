@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using RefApp.Models;
 
 namespace RefApp.ViewModels;
 
@@ -17,8 +18,14 @@ public class EditUserViewModel
     [Display(Name = "Role")]
     public string Role { get; set; } = string.Empty;
 
-    // --- NEW PROPERTY ---
     [Display(Name = "New Password (Optional)")]
     [DataType(DataType.Password)]
     public string? NewPassword { get; set; }
+
+    [StringLength(100)]
+    [Display(Name = "Home City / Village")]
+    public string? HomeCity { get; set; }
+
+    [Display(Name = "Referee Tier")]
+    public RefereeRank Rank { get; set; } = RefereeRank.None;
 }

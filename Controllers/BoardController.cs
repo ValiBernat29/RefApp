@@ -626,7 +626,9 @@ public class BoardController : Controller
             Id = user.Id,
             UserName = user.UserName ?? "",
             DisplayName = user.DisplayName,
-            Role = userRole
+            Role = userRole,
+            HomeCity = user.HomeCity,
+            Rank = user.Rank
         };
         return View(vm);
     }
@@ -637,6 +639,14 @@ public class BoardController : Controller
     {
         if (id != model.Id) return BadRequest();
         if (!ModelState.IsValid) return View(model);
+
+        // Validate city is a real Arad County locality
+        if (!string.IsNullOrEmpty(model.HomeCity)
+            && !AradLocalities.All.Contains(model.HomeCity.Trim()))
+        {
+            ModelState.AddModelError(nameof(model.HomeCity), "Please select a valid city or village from the list.");
+            return View(model);
+        }
 
         var user = await _userManager.FindByIdAsync(id);
         if (user == null) return NotFound();
@@ -656,6 +666,26 @@ public class BoardController : Controller
         }
 
         user.DisplayName = model.DisplayName ?? string.Empty;
+        user.Rank = model.Rank;
+
+        // Geocode HomeCity if it changed
+        var newCity = (model.HomeCity ?? "").Trim();
+        if (user.HomeCity != newCity)
+        {
+            user.HomeCity = newCity;
+            if (!string.IsNullOrEmpty(newCity))
+            {
+                var coords = await _geocoding.GeocodeAsync(newCity);
+                user.Latitude  = coords?.Lat;
+                user.Longitude = coords?.Lon;
+            }
+            else
+            {
+                user.Latitude = null;
+                user.Longitude = null;
+            }
+        }
+
         await _userManager.UpdateAsync(user);
 
         var currentRoles = await _userManager.GetRolesAsync(user);
@@ -743,7 +773,13 @@ public class BoardController : Controller
         if (id != model.Id) return BadRequest();
 
         if (!ModelState.IsValid)
+            return View(model);
+
+        // Validate city is a real Arad County locality
+        if (!string.IsNullOrEmpty(model.City)
+            && !AradLocalities.All.Contains(model.City.Trim()))
         {
+            ModelState.AddModelError(nameof(model.City), "Please select a valid city or village from the list.");
             return View(model);
         }
 

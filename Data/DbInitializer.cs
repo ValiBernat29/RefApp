@@ -88,6 +88,9 @@ public static class DbInitializer
             }
         }
         await context.SaveChangesAsync();
+
+        // Geocode any teams that have a City but no coordinates yet
+        await GeocodeTeamsWithMissingCoordsAsync(context, services);
     }
 
     private static string GetLocation(string homeTeam)
@@ -101,6 +104,36 @@ public static class DbInitializer
             "Team United Sânpaul" => "Sânpaul",
             _ => homeTeam.Split(' ').Length > 1 ? homeTeam.Split(' ')[1] : homeTeam
         };
+    }
+
+    /// <summary>
+    /// For every Team that has a City but Latitude/Longitude still null, call Nominatim once
+    /// to populate the coordinates. Runs at startup but skips already-geocoded teams.
+    /// </summary>
+    private static async Task GeocodeTeamsWithMissingCoordsAsync(
+        ApplicationDbContext context, IServiceProvider services)
+    {
+        var geocoding = services.GetService<RefApp.Services.GeocodingService>();
+        if (geocoding == null) return;
+
+        var teamsToGeocode = await context.Teams
+            .Where(t => !string.IsNullOrEmpty(t.City) && t.Latitude == null)
+            .ToListAsync();
+
+        foreach (var team in teamsToGeocode)
+        {
+            var coords = await geocoding.GeocodeAsync(team.City!);
+            if (coords.HasValue)
+            {
+                team.Latitude  = coords.Value.Lat;
+                team.Longitude = coords.Value.Lon;
+            }
+            // Nominatim rate limit: max 1 req/sec
+            await Task.Delay(1100);
+        }
+
+        if (teamsToGeocode.Any())
+            await context.SaveChangesAsync();
     }
 
     private static async Task SeedL4FixturesAsync(ApplicationDbContext context)
@@ -127,7 +160,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L4,
-                    PreferredMatchDay = DayOfWeek.Saturday
+                    PreferredMatchDay = DayOfWeek.Saturday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -240,7 +274,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L5A,
-                    PreferredMatchDay = DayOfWeek.Sunday
+                    PreferredMatchDay = DayOfWeek.Sunday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -337,7 +372,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L5B,
-                    PreferredMatchDay = DayOfWeek.Sunday
+                    PreferredMatchDay = DayOfWeek.Sunday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -424,7 +460,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L5C,
-                    PreferredMatchDay = DayOfWeek.Sunday
+                    PreferredMatchDay = DayOfWeek.Sunday,
+                    City = GetLocation(name)
                 });
             }
         }

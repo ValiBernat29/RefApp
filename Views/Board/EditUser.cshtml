@@ -52,6 +52,25 @@
                 <span asp-validation-for="NewPassword" class="validation"></span>
             </div>
 
+            <div class="space-y-1.5">
+                <label asp-for="HomeCity" class="block text-sm font-medium text-gray-700">Home City / Village</label>
+                <input asp-for="HomeCity"
+                       list="arad-localities"
+                       placeholder="Type to search..."
+                       autocomplete="off"
+                       id="homeCity-input"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <partial name="_CityDatalist" />
+                <span asp-validation-for="HomeCity" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="Rank" class="block text-sm font-medium text-gray-700">Referee Tier (internal)</label>
+                <select asp-for="Rank" asp-items="Html.GetEnumSelectList<RefApp.Models.RefereeRank>()"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400"></select>
+                <span asp-validation-for="Rank" class="validation"></span>
+            </div>
+
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
                         class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Changes</button>

@@ -43,9 +43,12 @@
 
             <div class="space-y-1.5">
                 <label asp-for="City" class="block text-sm font-medium text-gray-700">Ground City / Village</label>
-                <input asp-for="City" placeholder="e.g. Vinga, Pecica, Arad"
+                <input asp-for="City"
+                       list="arad-localities"
+                       placeholder="Type to search..."
+                       autocomplete="off"
                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
-                <p class="text-xs text-gray-400">Used to calculate distances for referee recommendations.</p>
+                <partial name="_CityDatalist" />
                 <span asp-validation-for="City" class="validation"></span>
             </div>
 
