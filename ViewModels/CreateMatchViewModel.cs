@@ -15,9 +15,8 @@ public class CreateMatchViewModel
     [Display(Name = "Match Date")]
     public DateTime MatchDate { get; set; }
 
-    [Required]
-    [StringLength(200)]
-    public string Location { get; set; } = string.Empty;
+    // Location is auto-derived from HomeTeam.City — not submitted by the form
+    public string? Location { get; set; }
 
     [Required]
     [Display(Name = "Home Team")]
