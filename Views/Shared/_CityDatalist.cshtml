@@ -1,0 +1,8 @@
+@* Shared datalist of all Arad County localities. 
+   Usage: <input list="arad-localities" ... />  then  <partial name="_CityDatalist" /> *@
+<datalist id="arad-localities">
+@foreach (var city in RefApp.Models.AradLocalities.All)
+{
+    <option value="@city"></option>
+}
+</datalist>

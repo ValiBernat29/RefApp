@@ -171,11 +171,20 @@ namespace RefApp.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("HomeCity")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("REAL");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("TEXT");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -192,6 +201,9 @@ namespace RefApp.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Rank")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SecurityStamp")
@@ -222,15 +234,11 @@ namespace RefApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AwayTeam")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                    b.Property<int>("AwayTeamId")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<string>("HomeTeam")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                    b.Property<int>("HomeTeamId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Location")
                         .IsRequired()
@@ -241,6 +249,10 @@ namespace RefApp.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AwayTeamId");
+
+                    b.HasIndex("HomeTeamId");
 
                     b.ToTable("Matches");
                 });
@@ -278,8 +290,18 @@ namespace RefApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("REAL");
+
                     b.Property<int>("League")
                         .HasColumnType("INTEGER");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -292,6 +314,34 @@ namespace RefApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Teams");
+                });
+
+            modelBuilder.Entity("RefApp.Models.TeamRefereeRefusal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("DateRefused")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefereeId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RefereeId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("TeamRefereeRefusals");
                 });
 
             modelBuilder.Entity("RefApp.Models.Unavailability", b =>
@@ -372,6 +422,25 @@ namespace RefApp.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RefApp.Models.Match", b =>
+                {
+                    b.HasOne("RefApp.Models.Team", "AwayTeam")
+                        .WithMany()
+                        .HasForeignKey("AwayTeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RefApp.Models.Team", "HomeTeam")
+                        .WithMany()
+                        .HasForeignKey("HomeTeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AwayTeam");
+
+                    b.Navigation("HomeTeam");
+                });
+
             modelBuilder.Entity("RefApp.Models.MatchAssignment", b =>
                 {
                     b.HasOne("RefApp.Models.Match", "Match")
@@ -389,6 +458,25 @@ namespace RefApp.Migrations
                     b.Navigation("Match");
 
                     b.Navigation("Referee");
+                });
+
+            modelBuilder.Entity("RefApp.Models.TeamRefereeRefusal", b =>
+                {
+                    b.HasOne("RefApp.Models.ApplicationUser", "Referee")
+                        .WithMany()
+                        .HasForeignKey("RefereeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RefApp.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Referee");
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("RefApp.Models.Unavailability", b =>

@@ -102,7 +102,7 @@
                         else                    { statusCss = "bg-red-50 text-red-500 border border-red-200";           statusLabel = "✗ None"; }
                         <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
                             <td class="px-6 py-4 text-sm">@m.MatchDate.ToString("dd MMM yyyy HH:mm")</td>
-                            <td class="px-6 py-4 font-medium">@m.HomeTeam vs @m.AwayTeam</td>
+                            <td class="px-6 py-4 font-medium">@m.HomeTeam?.Name vs @m.AwayTeam?.Name</td>
                             <td class="px-6 py-4 text-sm">@m.Location</td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-col gap-1.5">

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RefApp.Data;
 using RefApp.Models;
+using RefApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,16 @@ builder.Services
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+// ── Location & Scoring services ────────────────────────────────────────────
+builder.Services.AddHttpClient("Nominatim", client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("RefApp/1.0 (referee-appointment-system)");
+    client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+});
+builder.Services.AddScoped<GeocodingService>();
+builder.Services.AddScoped<RefereeScoringService>();
 
 var app = builder.Build();
 

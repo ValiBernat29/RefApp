@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using RefApp.Models;
+using RefApp.Services;
 
 namespace RefApp.Areas.Identity.Pages.Account
 {
@@ -28,13 +29,15 @@ namespace RefApp.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly GeocodingService _geocoding;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            GeocodingService geocoding)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -42,6 +45,7 @@ namespace RefApp.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _geocoding = geocoding;
         }
 
         /// <summary>
@@ -99,6 +103,13 @@ namespace RefApp.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [StringLength(100)]
+            [Display(Name = "Home City / Village")]
+            public string HomeCity { get; set; }
+
+            [Display(Name = "Referee Tier")]
+            public RefereeRank Rank { get; set; } = RefereeRank.None;
         }
 
 
@@ -114,17 +125,39 @@ namespace RefApp.Areas.Identity.Pages.Account
             ExternalLogins = new List<AuthenticationScheme>();
             if (ModelState.IsValid)
             {
+                // Validate city before creating user
+                if (!string.IsNullOrEmpty(Input.HomeCity)
+                    && !AradLocalities.All.Contains(Input.HomeCity.Trim()))
+                {
+                    ModelState.AddModelError(nameof(Input.HomeCity), "Please select a valid Arad County location.");
+                    return Page();
+                }
+
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Username, CancellationToken.None);
-                // Appending a dummy domain ensures it passes any hidden email format validation
-                await _emailStore.SetEmailAsync(user, $"{Input.Username}@refapp.local", CancellationToken.None); var result = await _userManager.CreateAsync(user, Input.Password);
+                await _emailStore.SetEmailAsync(user, $"{Input.Username}@refapp.local", CancellationToken.None);
+
+                // Username is the default display name
+                user.DisplayName = Input.Username;
+                user.Rank = Input.Rank;
+
+                // Set HomeCity and geocode if provided
+                var city = (Input.HomeCity ?? "").Trim();
+                if (!string.IsNullOrEmpty(city))
+                {
+                    user.HomeCity = city;
+                    var coords = await _geocoding.GeocodeAsync(city);
+                    user.Latitude  = coords?.Lat;
+                    user.Longitude = coords?.Lon;
+                }
+
+                var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Admin created a new account with password.");
 
-                    // Assign selected role (only allow known roles)
                     var allowedRoles = new[] { "Board", "Referee" };
                     if (!allowedRoles.Contains(Input.Role))
                     {
@@ -134,7 +167,6 @@ namespace RefApp.Areas.Identity.Pages.Account
 
                     await _userManager.AddToRoleAsync(user, Input.Role);
 
-                    // Do not auto-sign in the new user; stay as admin.
                     return LocalRedirect(returnUrl);
                 }
                 foreach (var error in result.Errors)

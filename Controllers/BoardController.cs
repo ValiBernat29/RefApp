@@ -6,6 +6,7 @@ using RefApp.Data;
 using RefApp.Models;
 using RefApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
+using RefApp.Services;
 
 namespace RefApp.Controllers;
 
@@ -14,11 +15,19 @@ public class BoardController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly GeocodingService _geocoding;
+    private readonly RefereeScoringService _scoring;
 
-    public BoardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public BoardController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        GeocodingService geocoding,
+        RefereeScoringService scoring)
     {
         _context = context;
         _userManager = userManager;
+        _geocoding = geocoding;
+        _scoring = scoring;
     }
 
     private async Task DeleteExpiredUnavailabilitiesAsync(DateTime todayUtcDate, CancellationToken cancellationToken)
@@ -36,6 +45,8 @@ public class BoardController : Controller
 
         var endOfWindow = today.AddDays(7);
         var upcoming = await _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
             .Where(m => m.MatchDate >= today && m.MatchDate < endOfWindow)
             .OrderBy(m => m.MatchDate)
             .Take(5)
@@ -54,6 +65,8 @@ public class BoardController : Controller
         ViewBag.MatchesNeedingAssignments = matchesNeedingAssignments;
 
         ViewBag.UpcomingMatches = await _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
             .Where(m => m.MatchDate >= today && m.MatchDate < endOfWindow)
             .Where(m =>
                 !_context.MatchAssignments.Any(a => a.MatchId == m.Id && a.RoleType == MatchRoleType.Main) ||
@@ -134,6 +147,8 @@ public class BoardController : Controller
         var filterEndDate = endDate ?? today.AddDays(7);
 
         var query = _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
             .Include(m => m.Assignments)
             .ThenInclude(a => a.Referee)
             .AsQueryable();
@@ -151,11 +166,11 @@ public class BoardController : Controller
                 // Căutăm toate echipele din liga selectată
                 var teamsInLeague = await _context.Teams
                     .Where(t => t.League == leagueEnum)
-                    .Select(t => t.Name)
+                    .Select(t => t.Id)
                     .ToListAsync(cancellationToken);
 
                 // Afișăm doar meciurile unde echipa gazdă face parte din acea ligă
-                query = query.Where(m => teamsInLeague.Contains(m.HomeTeam));
+                query = query.Where(m => teamsInLeague.Contains(m.HomeTeamId));
             }
         }
 
@@ -237,7 +252,7 @@ public class BoardController : Controller
         var hasTeamConflict = await _context.Matches
             .AnyAsync(m =>
                 m.MatchDate.Date == matchDate &&
-                (m.HomeTeam == home.Name || m.AwayTeam == home.Name || m.HomeTeam == away.Name || m.AwayTeam == away.Name),
+                (m.HomeTeamId == home.Id || m.AwayTeamId == home.Id || m.HomeTeamId == away.Id || m.AwayTeamId == away.Id),
                 cancellationToken);
 
         if (hasTeamConflict)
@@ -253,9 +268,9 @@ public class BoardController : Controller
         var match = new Match
         {
             MatchDate = model.MatchDate,
-            Location = model.Location,
-            HomeTeam = home.Name,
-            AwayTeam = away.Name
+            Location = home.City ?? home.Name,
+            HomeTeamId = home.Id,
+            AwayTeamId = away.Id
         };
 
         _context.Matches.Add(match);
@@ -281,9 +296,9 @@ public class BoardController : Controller
             Id = match.Id,
             MatchDate = match.MatchDate,
             Location = match.Location,
-            HomeTeamId = teams.FirstOrDefault(t => t.Name == match.HomeTeam)?.Id ?? 0,
-            AwayTeamId = teams.FirstOrDefault(t => t.Name == match.AwayTeam)?.Id ?? 0,
-            League = teams.FirstOrDefault(t => t.Name == match.HomeTeam)?.League,
+            HomeTeamId = match.HomeTeamId,
+            AwayTeamId = match.AwayTeamId,
+            League = teams.FirstOrDefault(t => t.Id == match.HomeTeamId)?.League,
             Teams = teams
         };
 
@@ -348,7 +363,7 @@ public class BoardController : Controller
             .Where(m => m.Id != id)
             .AnyAsync(m =>
                 m.MatchDate.Date == matchDate &&
-                (m.HomeTeam == home.Name || m.AwayTeam == home.Name || m.HomeTeam == away.Name || m.AwayTeam == away.Name),
+                (m.HomeTeamId == home.Id || m.AwayTeamId == home.Id || m.HomeTeamId == away.Id || m.AwayTeamId == away.Id),
                 cancellationToken);
 
         if (hasTeamConflict)
@@ -362,9 +377,9 @@ public class BoardController : Controller
         }
 
         match.MatchDate = model.MatchDate;
-        match.Location = model.Location;
-        match.HomeTeam = home.Name;
-        match.AwayTeam = away.Name;
+        match.Location = home.City ?? home.Name;
+        match.HomeTeamId = home.Id;
+        match.AwayTeamId = away.Id;
 
         await _context.SaveChangesAsync(cancellationToken);
         TempData["Success"] = "Match updated successfully.";
@@ -376,6 +391,8 @@ public class BoardController : Controller
     public async Task<IActionResult> DeleteMatch(int id, CancellationToken cancellationToken)
     {
         var match = await _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
             .Include(m => m.Assignments)
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
@@ -386,7 +403,7 @@ public class BoardController : Controller
         _context.Matches.Remove(match);
         await _context.SaveChangesAsync(cancellationToken);
 
-        TempData["Success"] = $"Match {match.HomeTeam} vs {match.AwayTeam} deleted successfully.";
+        TempData["Success"] = $"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} deleted successfully.";
         return RedirectToAction(nameof(UpcomingMatches));
     }
 
@@ -394,8 +411,9 @@ public class BoardController : Controller
     public async Task<IActionResult> Assign(int id, CancellationToken cancellationToken)
     {
         var match = await _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
             .Include(m => m.Assignments)
-            .ThenInclude(a => a.Referee)
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
         if (match == null)
             return NotFound();
@@ -448,11 +466,14 @@ public class BoardController : Controller
             })
             .ToList();
 
+        // Score and sort by suitability (best candidates first)
+        eligible = await _scoring.ScoreAndSortAsync(eligible, match, referees);
+
         var vm = new AssignRefereesViewModel
         {
             MatchId = match.Id,
-            HomeTeam = match.HomeTeam,
-            AwayTeam = match.AwayTeam,
+            HomeTeam = match.HomeTeam?.Name ?? "",
+            AwayTeam = match.AwayTeam?.Name ?? "",
             MatchDate = match.MatchDate,
             Location = match.Location,
             EligibleReferees = eligible,
@@ -468,6 +489,8 @@ public class BoardController : Controller
     public async Task<IActionResult> Assign(int id, [FromForm] AssignRefereesViewModel model, CancellationToken cancellationToken)
     {
         var match = await _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
             .Include(m => m.Assignments)
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
         if (match == null)
@@ -568,8 +591,8 @@ public class BoardController : Controller
             .ToList();
 
         model.MatchId = match.Id;
-        model.HomeTeam = match.HomeTeam;
-        model.AwayTeam = match.AwayTeam;
+        model.HomeTeam = match.HomeTeam?.Name ?? "";
+        model.AwayTeam = match.AwayTeam?.Name ?? "";
         model.MatchDate = match.MatchDate;
         model.Location = match.Location;
         return View(model);
@@ -603,7 +626,9 @@ public class BoardController : Controller
             Id = user.Id,
             UserName = user.UserName ?? "",
             DisplayName = user.DisplayName,
-            Role = userRole
+            Role = userRole,
+            HomeCity = user.HomeCity,
+            Rank = user.Rank
         };
         return View(vm);
     }
@@ -614,6 +639,14 @@ public class BoardController : Controller
     {
         if (id != model.Id) return BadRequest();
         if (!ModelState.IsValid) return View(model);
+
+        // Validate city is a real Arad County locality
+        if (!string.IsNullOrEmpty(model.HomeCity)
+            && !AradLocalities.All.Contains(model.HomeCity.Trim()))
+        {
+            ModelState.AddModelError(nameof(model.HomeCity), "Please select a valid city or village from the list.");
+            return View(model);
+        }
 
         var user = await _userManager.FindByIdAsync(id);
         if (user == null) return NotFound();
@@ -633,6 +666,26 @@ public class BoardController : Controller
         }
 
         user.DisplayName = model.DisplayName ?? string.Empty;
+        user.Rank = model.Rank;
+
+        // Geocode HomeCity if it changed
+        var newCity = (model.HomeCity ?? "").Trim();
+        if (user.HomeCity != newCity)
+        {
+            user.HomeCity = newCity;
+            if (!string.IsNullOrEmpty(newCity))
+            {
+                var coords = await _geocoding.GeocodeAsync(newCity);
+                user.Latitude  = coords?.Lat;
+                user.Longitude = coords?.Lon;
+            }
+            else
+            {
+                user.Latitude = null;
+                user.Longitude = null;
+            }
+        }
+
         await _userManager.UpdateAsync(user);
 
         var currentRoles = await _userManager.GetRolesAsync(user);
@@ -720,7 +773,13 @@ public class BoardController : Controller
         if (id != model.Id) return BadRequest();
 
         if (!ModelState.IsValid)
+            return View(model);
+
+        // Validate city is a real Arad County locality
+        if (!string.IsNullOrEmpty(model.City)
+            && !AradLocalities.All.Contains(model.City.Trim()))
         {
+            ModelState.AddModelError(nameof(model.City), "Please select a valid city or village from the list.");
             return View(model);
         }
 
@@ -731,6 +790,24 @@ public class BoardController : Controller
         team.Name = model.Name ?? "";
         team.League = model.League;
         team.PreferredMatchDay = model.PreferredMatchDay;
+
+        // Geocode city if it changed
+        var newCity = (model.City ?? "").Trim();
+        if (team.City != newCity)
+        {
+            team.City = newCity;
+            if (!string.IsNullOrEmpty(newCity))
+            {
+                var coords = await _geocoding.GeocodeAsync(newCity);
+                team.Latitude  = coords?.Lat;
+                team.Longitude = coords?.Lon;
+            }
+            else
+            {
+                team.Latitude = null;
+                team.Longitude = null;
+            }
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -747,7 +824,7 @@ public class BoardController : Controller
 
 
         var teamMatches = await _context.Matches
-            .Where(m => m.HomeTeam == team.Name || m.AwayTeam == team.Name)
+            .Where(m => m.HomeTeamId == team.Id || m.AwayTeamId == team.Id)
             .ToListAsync(cancellationToken);
 
         var matchIds = teamMatches.Select(m => m.Id).ToList();

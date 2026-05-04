@@ -69,7 +69,7 @@
                             @foreach (var m in upcoming.Take(5))
                             {
                                 <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4 font-medium">@m.HomeTeam vs @m.AwayTeam</td>
+                                    <td class="px-6 py-4 font-medium">@m.HomeTeam?.Name vs @m.AwayTeam?.Name</td>
                                     <td class="px-6 py-4">@m.MatchDate.ToString("ddd, MMM d, yyyy · HH:mm")</td>
                                     <td class="px-6 py-4">@m.Location</td>
                                     <td class="px-6 py-4">

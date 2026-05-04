@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Unavailability> Unavailabilities { get; set; } = default!;
 
+    public DbSet<TeamRefereeRefusal> TeamRefereeRefusals { get; set; } = default!;
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -28,6 +30,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithOne(a => a.Match)
             .HasForeignKey(a => a.MatchId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Match>()
+            .HasOne(m => m.HomeTeam)
+            .WithMany()
+            .HasForeignKey(m => m.HomeTeamId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Match>()
+            .HasOne(m => m.AwayTeam)
+            .WithMany()
+            .HasForeignKey(m => m.AwayTeamId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ApplicationUser>()
             .HasMany(u => u.MatchAssignments)

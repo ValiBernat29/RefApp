@@ -77,17 +77,18 @@ public static class DbInitializer
         await SeedL5BFixturesAsync(context);
         await SeedL5CFixturesAsync(context);
 
-        // Fix any existing matches that have incorrect locations
-        var allMatches = await context.Matches.ToListAsync();
+        // Sync all match locations to the home team's City (set by the board)
+        var allMatches = await context.Matches.Include(m => m.HomeTeam).ToListAsync();
         foreach (var m in allMatches)
         {
-            var correctLoc = GetLocation(m.HomeTeam);
-            if (m.Location != correctLoc && m.Location != "TBD")
-            {
+            var correctLoc = m.HomeTeam?.City ?? m.HomeTeam?.Name ?? m.Location;
+            if (m.Location != correctLoc)
                 m.Location = correctLoc;
-            }
         }
         await context.SaveChangesAsync();
+
+        // Geocode any teams that have a City but no coordinates yet
+        await GeocodeTeamsWithMissingCoordsAsync(context, services);
     }
 
     private static string GetLocation(string homeTeam)
@@ -101,6 +102,36 @@ public static class DbInitializer
             "Team United Sânpaul" => "Sânpaul",
             _ => homeTeam.Split(' ').Length > 1 ? homeTeam.Split(' ')[1] : homeTeam
         };
+    }
+
+    /// <summary>
+    /// For every Team that has a City but Latitude/Longitude still null, call Nominatim once
+    /// to populate the coordinates. Runs at startup but skips already-geocoded teams.
+    /// </summary>
+    private static async Task GeocodeTeamsWithMissingCoordsAsync(
+        ApplicationDbContext context, IServiceProvider services)
+    {
+        var geocoding = services.GetService<RefApp.Services.GeocodingService>();
+        if (geocoding == null) return;
+
+        var teamsToGeocode = await context.Teams
+            .Where(t => !string.IsNullOrEmpty(t.City) && t.Latitude == null)
+            .ToListAsync();
+
+        foreach (var team in teamsToGeocode)
+        {
+            var coords = await geocoding.GeocodeAsync(team.City!);
+            if (coords.HasValue)
+            {
+                team.Latitude  = coords.Value.Lat;
+                team.Longitude = coords.Value.Lon;
+            }
+            // Nominatim rate limit: max 1 req/sec
+            await Task.Delay(1100);
+        }
+
+        if (teamsToGeocode.Any())
+            await context.SaveChangesAsync();
     }
 
     private static async Task SeedL4FixturesAsync(ApplicationDbContext context)
@@ -127,7 +158,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L4,
-                    PreferredMatchDay = DayOfWeek.Saturday
+                    PreferredMatchDay = DayOfWeek.Saturday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -187,10 +219,11 @@ public static class DbInitializer
         };
 
         // ── Fix any existing fixtures that still have "TBD" as location ──────
-        var tbd = context.Matches.Where(m => m.Location == "TBD").ToList();
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
+        var tbd = context.Matches.Include(m => m.HomeTeam).Where(m => m.Location == "TBD").ToList();
         foreach (var m in tbd)
         {
-            m.Location = GetLocation(m.HomeTeam);
+            m.Location = GetLocation(m.HomeTeam?.Name ?? "");
         }
         await context.SaveChangesAsync();
 
@@ -198,16 +231,16 @@ public static class DbInitializer
         foreach (var (home, away, date) in fixtures)
         {
             bool alreadyExists = context.Matches.Any(m =>
-                m.HomeTeam == home &&
-                m.AwayTeam == away &&
+                m.HomeTeamId == teamDict[home] &&
+                m.AwayTeamId == teamDict[away] &&
                 m.MatchDate == date);
 
             if (!alreadyExists)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
@@ -239,7 +272,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L5A,
-                    PreferredMatchDay = DayOfWeek.Sunday
+                    PreferredMatchDay = DayOfWeek.Sunday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -279,6 +313,7 @@ public static class DbInitializer
             ("Șoimii Livada", "Banatul Arad", new DateTime(2026, 06, 06, 18, 00, 0)),
         };
 
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
         var saturdayTeams = new[] { "Olimpia Bujac", "ACS Sâmbăteni", "Voința Mailat", "Mureșul Zădăreni" };
 
         foreach (var (home, away, originalDate) in fixtures)
@@ -290,14 +325,14 @@ public static class DbInitializer
             }
 
             var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
-                m.HomeTeam == home && m.AwayTeam == away);
+                m.HomeTeamId == teamDict[home] && m.AwayTeamId == teamDict[away]);
 
             if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
@@ -335,7 +370,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L5B,
-                    PreferredMatchDay = DayOfWeek.Sunday
+                    PreferredMatchDay = DayOfWeek.Sunday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -365,6 +401,7 @@ public static class DbInitializer
             ("Podgoria Ghioroc", "Frontiera Pilu", new DateTime(2026, 05, 23, 17, 00, 0)),
         };
 
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
         var saturdayTeams = new[] { "FC Sântana", "Podgoria Ghioroc", "Real Horia" };
 
         foreach (var (home, away, originalDate) in fixtures)
@@ -376,14 +413,14 @@ public static class DbInitializer
             }
 
             var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
-                m.HomeTeam == home && m.AwayTeam == away);
+                m.HomeTeamId == teamDict[home] && m.AwayTeamId == teamDict[away]);
 
             if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });
@@ -421,7 +458,8 @@ public static class DbInitializer
                 {
                     Name = name,
                     League = League.L5C,
-                    PreferredMatchDay = DayOfWeek.Sunday
+                    PreferredMatchDay = DayOfWeek.Sunday,
+                    City = GetLocation(name)
                 });
             }
         }
@@ -467,6 +505,7 @@ public static class DbInitializer
             ("Voința Sintea Mare", "Unirea Gurahonț", new DateTime(2026, 06, 06, 18, 00, 0)),
         };
 
+        var teamDict = await context.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
         foreach (var (home, away, originalDate) in fixtures)
         {
             var date = originalDate;
@@ -476,14 +515,14 @@ public static class DbInitializer
             }
 
             var existingMatch = await context.Matches.FirstOrDefaultAsync(m =>
-                m.HomeTeam == home && m.AwayTeam == away);
+                m.HomeTeamId == teamDict[home] && m.AwayTeamId == teamDict[away]);
 
             if (existingMatch == null)
             {
                 context.Matches.Add(new Match
                 {
-                    HomeTeam = home,
-                    AwayTeam = away,
+                    HomeTeamId = teamDict[home],
+                    AwayTeamId = teamDict[away],
                     MatchDate = date,
                     Location = GetLocation(home)
                 });

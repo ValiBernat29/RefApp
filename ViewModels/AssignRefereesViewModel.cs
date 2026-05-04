@@ -28,4 +28,20 @@ public class RefereeOption
 
     /// <summary>Same day but different hour → soft warning only.</summary>
     public bool HasOtherMatchThatDay { get; set; }
+
+    // ── Suitability Scoring (Phase 3) ─────────────────────────────────────
+    /// <summary>Computed score; higher = better candidate. Board sees ordering, not the number.</summary>
+    public double SuitabilityScore { get; set; } = 100;
+
+    /// <summary>Straight-line km between referee home and match location. Null if coordinates unavailable.</summary>
+    public double? DistanceKm { get; set; }
+
+    /// <summary>How many of the last 5 matches for either team this referee officiated.</summary>
+    public int RecentMatchCount { get; set; }
+
+    /// <summary>Home team has a refusal on record for this referee.</summary>
+    public bool IsRefusedByHomeTeam { get; set; }
+
+    /// <summary>Away team has a refusal on record for this referee.</summary>
+    public bool IsRefusedByAwayTeam { get; set; }
 }
