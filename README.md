@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="./docs/images/logo.png" alt="RefApp Logo" width="400" />
+<img src="./docs/images/RefappLogo.png" alt="RefApp Logo" width="400" />
 
 <br/>
 
