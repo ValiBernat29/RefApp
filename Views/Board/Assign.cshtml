@@ -37,10 +37,11 @@
                 {
                     var label = r.DisplayName;
                     var badges = new List<string>();
-                    if (r.IsUnavailable) badges.Add("❌ Unavailable");
-                    if (r.HasConflictingMatch) badges.Add("❌ TIME CONFLICT");
+                    if (r.RoleMatchBoostApplied) badges.Add("⭐ Role match");
+                    if (r.DistanceKm.HasValue)   badges.Add($"{r.DistanceKm:0.#} km");
+                    if (r.IsUnavailable)          badges.Add("❌ Unavailable");
+                    if (r.HasConflictingMatch)    badges.Add("❌ TIME CONFLICT");
                     else if (r.HasOtherMatchThatDay) badges.Add("⚠ Match at different hour");
-                    
                     if (badges.Count > 0) label += " — " + string.Join(", ", badges);
                     return label;
                 }
@@ -61,7 +62,7 @@
                 <label class="block text-sm font-medium text-gray-700">Assistant 1</label>
                 <select asp-for="Assistant1Id" class="ref-select">
                     <option value="">(None)</option>
-                    @foreach (var r in Model.EligibleReferees)
+                    @foreach (var r in Model.EligibleRefereesAsst1)
                     {
                         <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
                     }
@@ -72,7 +73,7 @@
                 <label class="block text-sm font-medium text-gray-700">Assistant 2</label>
                 <select asp-for="Assistant2Id" class="ref-select">
                     <option value="">(None)</option>
-                    @foreach (var r in Model.EligibleReferees)
+                    @foreach (var r in Model.EligibleRefereesAsst2)
                     {
                         <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
                     }

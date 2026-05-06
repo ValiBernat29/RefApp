@@ -466,8 +466,14 @@ public class BoardController : Controller
             })
             .ToList();
 
-        // Score and sort by suitability (best candidates first)
-        eligible = await _scoring.ScoreAndSortAsync(eligible, match, referees);
+        // Score and sort separately for each role slot so each dropdown
+        // surfaces role-matched referees first, then by distance.
+        var eligibleForMain  = await _scoring.ScoreAndSortAsync(
+            eligible.Select(e => CloneOption(e)).ToList(), match, referees, MatchRoleType.Main);
+        var eligibleForAsst1 = await _scoring.ScoreAndSortAsync(
+            eligible.Select(e => CloneOption(e)).ToList(), match, referees, MatchRoleType.Assistant1);
+        var eligibleForAsst2 = await _scoring.ScoreAndSortAsync(
+            eligible.Select(e => CloneOption(e)).ToList(), match, referees, MatchRoleType.Assistant2);
 
         var vm = new AssignRefereesViewModel
         {
@@ -476,13 +482,26 @@ public class BoardController : Controller
             AwayTeam = match.AwayTeam?.Name ?? "",
             MatchDate = match.MatchDate,
             Location = match.Location,
-            EligibleReferees = eligible,
-            MainRefereeId = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Main)?.RefereeId,
-            Assistant1Id = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant1)?.RefereeId,
-            Assistant2Id = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant2)?.RefereeId
+            EligibleReferees       = eligibleForMain,   // used for Main dropdown
+            EligibleRefereesAsst1  = eligibleForAsst1,
+            EligibleRefereesAsst2  = eligibleForAsst2,
+            MainRefereeId  = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Main)?.RefereeId,
+            Assistant1Id   = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant1)?.RefereeId,
+            Assistant2Id   = match.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant2)?.RefereeId
         };
         return View(vm);
     }
+
+    /// <summary>Shallow-clones a RefereeOption so each scored list is independent.</summary>
+    private static RefereeOption CloneOption(RefereeOption o) => new()
+    {
+        Id = o.Id,
+        DisplayName = o.DisplayName,
+        Email = o.Email,
+        IsUnavailable = o.IsUnavailable,
+        HasConflictingMatch = o.HasConflictingMatch,
+        HasOtherMatchThatDay = o.HasOtherMatchThatDay
+    };
 
     [HttpPost]
     [ValidateAntiForgeryToken]
