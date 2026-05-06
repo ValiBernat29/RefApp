@@ -110,6 +110,9 @@ namespace RefApp.Areas.Identity.Pages.Account
 
             [Display(Name = "Referee Tier")]
             public RefereeRank Rank { get; set; } = RefereeRank.None;
+
+            [Display(Name = "Preferred Role")]
+            public RefereePreferredRole PreferredRole { get; set; } = RefereePreferredRole.None;
         }
 
 
@@ -141,6 +144,7 @@ namespace RefApp.Areas.Identity.Pages.Account
                 // Username is the default display name
                 user.DisplayName = Input.Username;
                 user.Rank = Input.Rank;
+                user.PreferredRole = Input.PreferredRole;
 
                 // Set HomeCity and geocode if provided
                 var city = (Input.HomeCity ?? "").Trim();

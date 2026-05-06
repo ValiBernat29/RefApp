@@ -28,4 +28,7 @@ public class EditUserViewModel
 
     [Display(Name = "Referee Tier")]
     public RefereeRank Rank { get; set; } = RefereeRank.None;
-}
+
+    [Display(Name = "Preferred Role")]
+    public RefereePreferredRole PreferredRole { get; set; } = RefereePreferredRole.None;
+}

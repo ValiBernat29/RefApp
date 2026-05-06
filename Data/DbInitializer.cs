@@ -51,6 +51,9 @@ public static class DbInitializer
                     ALTER TABLE [AspNetUsers] ADD [Rank] int NULL;
                 UPDATE [AspNetUsers] SET [Rank] = 0 WHERE [Rank] IS NULL;
 
+                IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('AspNetUsers') AND name = 'PreferredRole')
+                    ALTER TABLE [AspNetUsers] ADD [PreferredRole] int NOT NULL DEFAULT 0;
+
                 IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Matches') AND name = 'HomeTeam')
                 BEGIN
                     ALTER TABLE [Matches] ALTER COLUMN [HomeTeam] nvarchar(200) NULL;

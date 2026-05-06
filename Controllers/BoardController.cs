@@ -628,7 +628,8 @@ public class BoardController : Controller
             DisplayName = user.DisplayName,
             Role = userRole,
             HomeCity = user.HomeCity,
-            Rank = user.Rank
+            Rank = user.Rank,
+            PreferredRole = user.PreferredRole
         };
         return View(vm);
     }
@@ -667,6 +668,7 @@ public class BoardController : Controller
 
         user.DisplayName = model.DisplayName ?? string.Empty;
         user.Rank = model.Rank;
+        user.PreferredRole = model.PreferredRole;
 
         // Geocode HomeCity if it changed
         var newCity = (model.HomeCity ?? "").Trim();

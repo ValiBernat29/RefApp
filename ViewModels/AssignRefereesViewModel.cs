@@ -1,3 +1,5 @@
+using RefApp.Models;
+
 namespace RefApp.ViewModels;
 
 public class AssignRefereesViewModel
@@ -44,4 +46,10 @@ public class RefereeOption
 
     /// <summary>Away team has a refusal on record for this referee.</summary>
     public bool IsRefusedByAwayTeam { get; set; }
+
+    /// <summary>The referee's designated preferred role (Main / Assistant / None).</summary>
+    public RefereePreferredRole PreferredRole { get; set; }
+
+    /// <summary>True when the referee's preferred role matches the slot being scored.</summary>
+    public bool RoleMatchBoostApplied { get; set; }
 }
