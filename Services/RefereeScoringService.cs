@@ -135,10 +135,14 @@ public class RefereeScoringService
             option.SuitabilityScore = Math.Round(score, 2);
         }
 
-        // Sort: refused refs last, then by score descending
+        // Sort priority:
+        //  1. Refused refs go to the bottom
+        //  2. Role match first (referees whose preferred role fits this slot)
+        //  3. Distance ascending (closest first within each group)
         return candidates
             .OrderBy(o => o.IsRefusedByHomeTeam || o.IsRefusedByAwayTeam ? 1 : 0)
-            .ThenByDescending(o => o.SuitabilityScore)
+            .ThenBy(o => o.RoleMatchBoostApplied ? 0 : 1)
+            .ThenBy(o => o.DistanceKm ?? double.MaxValue)
             .ToList();
     }
 }
