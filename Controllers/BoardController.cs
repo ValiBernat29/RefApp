@@ -828,6 +828,15 @@ public class BoardController : Controller
                 team.Latitude = null;
                 team.Longitude = null;
             }
+
+            // Sync location to all matches where this team is the home team
+            var homeMatches = await _context.Matches
+                .Where(m => m.HomeTeamId == team.Id)
+                .ToListAsync(cancellationToken);
+            foreach (var match in homeMatches)
+            {
+                match.Location = newCity;
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
