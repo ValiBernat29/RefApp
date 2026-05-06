@@ -2,11 +2,9 @@
 
 <div align="center">
 
-<!-- TODO: Add your hero/banner screenshot here -->
-> *Replace this with a banner screenshot of the dashboard*
-<br/>
+<img src="./docs/images/logo.png" alt="RefApp Logo" width="400" />
 
-`![RefApp Dashboard](./docs/images/dashboard-banner.png)`
+<br/>
 
 **RefApp** is a comprehensive, intelligent web application designed to streamline the management and assignment of football referees. Built with ASP.NET Core MVC and styled with Tailwind CSS, it features a smart scoring algorithm that helps board members assign the right referees to the right matches.
 
