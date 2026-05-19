@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="./docs/images/RefappLogo.png" alt="RefApp Logo" width="400" />
+<img width="1408" height="768" alt="image" src="https://github.com/user-attachments/assets/a246aa70-e76d-4770-b22b-a81fb5e408be" />
 
 <br/>
 
@@ -36,8 +36,8 @@
 <summary><b>1. Admin / Board Dashboard</b></summary>
 <br/>
 
-<!-- TODO: Add screenshot of the board dashboard here -->
-`![Board Dashboard](./docs/images/board-dashboard.png)`
+<img width="1842" height="872" alt="image" src="https://github.com/user-attachments/assets/b365e3a2-01ff-4bf0-8aba-19468a4f2f0e" />
+
 
 *Description: Overview of weekly matches, quick stats, and pending assignments.*
 </details>
@@ -46,8 +46,8 @@
 <summary><b>2. Intelligent Referee Assignment View</b></summary>
 <br/>
 
-<!-- TODO: Add screenshot of the assignment view showing scores here -->
-`![Assignment View](./docs/images/assignment-view.png)`
+<img width="1838" height="883" alt="image" src="https://github.com/user-attachments/assets/0d1be734-b13b-4ecc-9ce4-c6e93e8e76a6" />
+
 
 *Description: The assignment interface displaying suitability scores, distance calculations, and role preference indicators.*
 </details>
@@ -56,8 +56,8 @@
 <summary><b>3. Conflict Validation in Action</b></summary>
 <br/>
 
-<!-- TODO: Add screenshot of a conflict warning here -->
-`![Conflict Validation](./docs/images/conflict-validation.png)`
+<img width="1833" height="879" alt="image" src="https://github.com/user-attachments/assets/fb19ef70-f455-45ff-afca-aaffaf167f62" />
+
 
 *Description: System preventing a double-booking (hard conflict) and warning about same-day travel (soft conflict).*
 </details>
@@ -66,10 +66,10 @@
 <summary><b>4. Referee Profile & Preferences</b></summary>
 <br/>
 
-<!-- TODO: Add screenshot of the referee profile settings here -->
-`![Referee Profile](./docs/images/referee-profile.png)`
+<img width="1837" height="873" alt="image" src="https://github.com/user-attachments/assets/c65bb648-79ff-4349-9eb3-880dbcc02a3c" />
 
-*Description: Interface for referees to set their home location and preferred roles (Main/Assistant).*
+
+*Description: Interface for referees to set their home location.*
 </details>
 
 ---
@@ -131,11 +131,3 @@
 - `wwwroot/` - Static files, compiled CSS, and JS assets.
 
 ---
-
-## 🤝 Contributing
-
-Contributions are welcome! If you'd like to improve the scoring algorithm or add new league support, please open an issue or submit a pull request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
