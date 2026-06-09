@@ -435,24 +435,25 @@ public class BoardController : Controller
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        var matchHour = match.MatchDate.Hour;
+        var windowStart = match.MatchDate.AddHours(-5);
+        var windowEnd   = match.MatchDate.AddHours(5);
 
-        // Hard conflict: same day AND same hour → referee cannot be double-booked
+        // Hard conflict: another match within 5 hours — referee cannot be double-booked
         var conflictRefIds = await _context.MatchAssignments
             .Include(a => a.Match)
             .Where(a => a.MatchId != match.Id
-                && a.Match!.MatchDate.Date == matchDate
-                && a.Match!.MatchDate.Hour == matchHour)
+                && a.Match!.MatchDate > windowStart
+                && a.Match!.MatchDate < windowEnd)
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        // Soft warning: same day but different hour
+        // Soft warning: same day but more than 5 hours apart
         var sameDayDiffTimeRefIds = await _context.MatchAssignments
             .Include(a => a.Match)
             .Where(a => a.MatchId != match.Id
                 && a.Match!.MatchDate.Date == matchDate
-                && a.Match!.MatchDate.Hour != matchHour)
+                && (a.Match!.MatchDate <= windowStart || a.Match!.MatchDate >= windowEnd))
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -529,16 +530,16 @@ public class BoardController : Controller
             return await ReloadAssignView(match, model, cancellationToken);
         }
 
-        var matchDate = match.MatchDate.Date;
-        var matchHour = match.MatchDate.Hour;
+        var matchWindowStart = match.MatchDate.AddHours(-5);
+        var matchWindowEnd   = match.MatchDate.AddHours(5);
 
-        // Hard block only when day AND hour overlap (same kick-off hour)
+        // Hard block: any assignment within a 5-hour window around this match
         var refsWithConflict = await _context.MatchAssignments
             .Include(a => a.Match)
             .Where(a =>
                 a.MatchId != match.Id &&
-                a.Match!.MatchDate.Date == matchDate &&
-                a.Match!.MatchDate.Hour == matchHour &&
+                a.Match!.MatchDate > matchWindowStart &&
+                a.Match!.MatchDate < matchWindowEnd &&
                 ids.Contains(a.RefereeId))
             .Select(a => a.RefereeId)
             .Distinct()
@@ -546,7 +547,7 @@ public class BoardController : Controller
 
         if (refsWithConflict.Any())
         {
-            ModelState.AddModelError("", "One or more selected referees are already assigned to another match at the same time (same day and hour).");
+            ModelState.AddModelError("", "One or more selected referees are already assigned to another match within 5 hours of this one.");
             return await ReloadAssignView(match, model, cancellationToken);
         }
 
@@ -574,7 +575,8 @@ public class BoardController : Controller
             .ToListAsync(cancellationToken);
 
         var matchDate = match.MatchDate.Date;
-        var matchHour = match.MatchDate.Hour;
+        var windowStart = match.MatchDate.AddHours(-5);
+        var windowEnd   = match.MatchDate.AddHours(5);
 
         var unavailableRefereeIds = await _context.Unavailabilities
             .Where(u => u.StartDate <= matchDate && u.EndDate >= matchDate)
@@ -585,8 +587,8 @@ public class BoardController : Controller
         var conflictRefIds = await _context.MatchAssignments
             .Include(a => a.Match)
             .Where(a => a.MatchId != match.Id
-                && a.Match!.MatchDate.Date == matchDate
-                && a.Match!.MatchDate.Hour == matchHour)
+                && a.Match!.MatchDate > windowStart
+                && a.Match!.MatchDate < windowEnd)
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -595,7 +597,7 @@ public class BoardController : Controller
             .Include(a => a.Match)
             .Where(a => a.MatchId != match.Id
                 && a.Match!.MatchDate.Date == matchDate
-                && a.Match!.MatchDate.Hour != matchHour)
+                && (a.Match!.MatchDate <= windowStart || a.Match!.MatchDate >= windowEnd))
             .Select(a => a.RefereeId)
             .Distinct()
             .ToListAsync(cancellationToken);
