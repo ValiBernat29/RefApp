@@ -4,6 +4,9 @@
     var roles = ViewBag.UserRoles as Dictionary<string, string>;
 }
 
+@* Hidden antiforgery token for AJAX calls *@
+<form id="af-form" style="display:none">@Html.AntiForgeryToken()</form>
+
 <main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
     <!-- Page Header -->
@@ -48,6 +51,7 @@
                     @foreach (var u in Model)
                     {
                         var roleName = roles != null && roles.ContainsKey(u.Id) ? roles[u.Id] : "—";
+                        var isReferee = roleName.Contains("Referee");
                         <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
                             <td class="px-6 py-4 text-sm">@u.UserName</td>
                             <td class="px-6 py-4 font-medium">@(u.DisplayName ?? "—")</td>
@@ -58,6 +62,23 @@
                                 <div class="flex items-center gap-2">
                                     <a asp-action="EditUser" asp-route-id="@u.Id"
                                        class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>
+
+                                    @* Car toggle — only meaningful for referees *@
+                                    @if (isReferee)
+                                    {
+                                        <button type="button"
+                                                class="car-toggle-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 @(u.HasCar ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100")"
+                                                data-id="@u.Id"
+                                                data-has-car="@u.HasCar.ToString().ToLower()"
+                                                title="@(u.HasCar ? "Has a car — click to remove" : "No car — click to assign")">
+                                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h1l2-4h8l2 4h1a2 2 0 012 2v6a2 2 0 01-2 2h-2m-6 0h4m-4 0a2 2 0 100 4 2 2 0 000-4zm4 0a2 2 0 100 4 2 2 0 000-4z"
+                                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                                            </svg>
+                                            <span class="car-label">@(u.HasCar ? "Has Car" : "No Car")</span>
+                                        </button>
+                                    }
+
                                     <form asp-action="DeleteUser" asp-route-id="@u.Id" method="post" class="inline"
                                           onsubmit="return confirm('Are you sure you want to permanently delete @u.UserName?');">
                                         <button type="submit"
@@ -73,3 +94,57 @@
     </section>
 
 </main>
+
+@section Scripts {
+<script>
+    const af = document.querySelector('#af-form input[name="__RequestVerificationToken"]').value;
+
+    document.querySelectorAll('.car-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            const id = this.dataset.id;
+            const hasCar = this.dataset.hasCar === 'true';
+
+            // Disable button while saving
+            this.disabled = true;
+            this.style.opacity = '0.6';
+
+            try {
+                const res = await fetch('/Board/ToggleCar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': af
+                    },
+                    body: 'id=' + encodeURIComponent(id)
+                });
+
+                if (!res.ok) throw new Error('Server error');
+
+                const data = await res.json();
+                applyCarState(this, data.hasCar);
+            } catch {
+                // revert on error — just re-enable
+            } finally {
+                this.disabled = false;
+                this.style.opacity = '';
+            }
+        });
+    });
+
+    function applyCarState(btn, hasCar) {
+        btn.dataset.hasCar = hasCar.toString();
+        btn.querySelector('.car-label').textContent = hasCar ? 'Has Car' : 'No Car';
+        btn.title = hasCar ? 'Has a car — click to remove' : 'No car — click to assign';
+
+        if (hasCar) {
+            btn.className = btn.className
+                .replace('bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100',
+                         'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100');
+        } else {
+            btn.className = btn.className
+                .replace('bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+                         'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100');
+        }
+    }
+</script>
+}
