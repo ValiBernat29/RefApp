@@ -78,6 +78,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcQXNzaWduLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/valib/Desktop/RefAppAnti/RefApp/Views/Board/AutoAllocate.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcQXV0b0FsbG9jYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/valib/Desktop/RefAppAnti/RefApp/Views/Board/AutoAllocateResult.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcQXV0b0FsbG9jYXRlUmVzdWx0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/valib/Desktop/RefAppAnti/RefApp/Views/Board/CreateMatch.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQm9hcmRcQ3JlYXRlTWF0Y2guY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

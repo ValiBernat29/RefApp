@@ -1,0 +1,223 @@
+@using RefApp.Services
+@using RefApp.Models
+@{
+    ViewData["Title"] = "Allocation Results";
+    var result  = ViewBag.AllocationResult  as AllocationResult;
+    var matches = ViewBag.AssignedMatches   as IEnumerable<Match> ?? Enumerable.Empty<Match>();
+}
+
+<main class="max-w-[1440px] mx-auto p-8 space-y-8">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Allocation Results</h1>
+            <nav class="text-sm text-gray-400 mt-0.5">
+                <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+                <span class="mx-1">•</span>
+                <a asp-controller="Board" asp-action="AutoAllocate" class="hover:text-gray-600">Auto-Allocate</a>
+                <span class="mx-1">•</span><span>Results</span>
+            </nav>
+        </div>
+        <div class="flex items-center gap-3">
+            <a asp-action="AutoAllocate"
+               class="action-btn-outline px-5 py-2.5 rounded-lg text-sm font-medium">
+               ← Run Again
+            </a>
+            <a asp-action="UpcomingMatches"
+               class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+               View All Matches →
+            </a>
+        </div>
+    </div>
+
+    @if (result != null)
+    {
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-5">
+            <div class="bg-white rounded-xl card-shadow p-5 flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Period</span>
+                <span class="text-sm font-bold text-gray-800">@ViewBag.StartDate – @ViewBag.EndDate</span>
+            </div>
+            <div class="bg-white rounded-xl card-shadow p-5 flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Matches Processed</span>
+                <span class="text-3xl font-extrabold text-sky-600">@result.TotalMatchesToAssign</span>
+            </div>
+            <div class="bg-white rounded-xl card-shadow p-5 flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Fully Assigned</span>
+                <span class="text-3xl font-extrabold text-emerald-600">@result.FullyAssignedMatchesCount</span>
+            </div>
+            <div class="bg-white rounded-xl card-shadow p-5 flex flex-col gap-1">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Avg Travel</span>
+                <span class="text-3xl font-extrabold text-gray-800">@result.AvgTravelDistanceKm <span class="text-base font-medium text-gray-400">km</span></span>
+            </div>
+        </div>
+
+        <!-- Extra Stats Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="bg-white rounded-xl card-shadow p-5 flex items-center gap-4">
+                <div class="p-3 bg-amber-100 rounded-lg">
+                    <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Partially Assigned</p>
+                    <p class="text-2xl font-bold text-amber-600">@result.PartiallyAssignedMatchesCount</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl card-shadow p-5 flex items-center gap-4">
+                <div class="p-3 bg-sky-100 rounded-lg">
+                    <svg class="h-6 w-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                        <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Total Travel</p>
+                    <p class="text-2xl font-bold text-sky-700">@result.TotalTravelDistanceKm <span class="text-sm font-medium text-gray-400">km</span></p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl card-shadow p-5 flex items-center gap-4">
+                @if (result.Success)
+                {
+                    <div class="p-3 bg-emerald-100 rounded-lg">
+                        <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Status</p>
+                        <p class="text-sm font-semibold text-emerald-700">Completed Successfully</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-semibold uppercase tracking-wide">Status</p>
+                        <p class="text-sm font-semibold text-red-600">@result.Message</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Warnings -->
+        @if (result.Warnings.Any())
+        {
+            <section class="bg-amber-50 border border-amber-200 rounded-xl p-6 space-y-3">
+                <h2 class="font-bold text-amber-800 flex items-center gap-2">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                    </svg>
+                    @result.Warnings.Count Unresolved Slot(s)
+                </h2>
+                <ul class="space-y-1.5 text-sm text-amber-900">
+                    @foreach (var w in result.Warnings)
+                    {
+                        <li class="flex items-start gap-2">
+                            <span class="mt-0.5 text-amber-500">•</span>
+                            @w
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    }
+
+    <!-- Match-by-Match Breakdown -->
+    <section class="bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800">Match Schedule — @ViewBag.StartDate to @ViewBag.EndDate</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                        <th class="px-6 py-3">Date</th>
+                        <th class="px-6 py-3">Match</th>
+                        <th class="px-6 py-3">League</th>
+                        <th class="px-6 py-3">Main Referee</th>
+                        <th class="px-6 py-3">Assistant 1</th>
+                        <th class="px-6 py-3">Assistant 2</th>
+                        <th class="px-6 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @if (!matches.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-400 text-sm">
+                                No matches found in the selected date range.
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var m in matches)
+                    {
+                        var mainRef  = m.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Main);
+                        var asst1    = m.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant1);
+                        var asst2    = m.Assignments.FirstOrDefault(a => a.RoleType == MatchRoleType.Assistant2);
+                        var filled   = m.Assignments.Count;
+
+                        string statusCss, statusLabel;
+                        if (filled >= 3)     { statusCss = "bg-emerald-50 text-emerald-700 border border-emerald-200"; statusLabel = "✓ Full"; }
+                        else if (filled > 0) { statusCss = "bg-amber-50 text-amber-700 border border-amber-200";       statusLabel = "⚠ Partial"; }
+                        else                 { statusCss = "bg-red-50 text-red-500 border border-red-200";             statusLabel = "✗ Unassigned"; }
+
+                        <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 text-sm whitespace-nowrap">@m.MatchDate.ToString("dd MMM yyyy HH:mm")</td>
+                            <td class="px-6 py-4 font-medium">@m.HomeTeam?.Name vs @m.AwayTeam?.Name</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-block bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                    @(m.HomeTeam?.League.ToString() ?? "—")
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                @if (mainRef?.Referee != null)
+                                {
+                                    <span class="font-medium text-sky-700">@(mainRef.Referee.DisplayName ?? mainRef.Referee.UserName ?? mainRef.Referee.Email ?? "—")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-red-400 text-xs">Not assigned</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                @if (asst1?.Referee != null)
+                                {
+                                    <span class="text-indigo-700">@(asst1.Referee.DisplayName ?? asst1.Referee.UserName ?? asst1.Referee.Email ?? "—")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-red-400 text-xs">Not assigned</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                @if (asst2?.Referee != null)
+                                {
+                                    <span class="text-indigo-700">@(asst2.Referee.DisplayName ?? asst2.Referee.UserName ?? asst2.Referee.Email ?? "—")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-red-400 text-xs">Not assigned</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full @statusCss">@statusLabel</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>

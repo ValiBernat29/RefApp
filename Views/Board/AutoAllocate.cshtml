@@ -1,0 +1,113 @@
+@{
+    ViewData["Title"] = "Smart Auto-Allocation";
+}
+
+<main class="max-w-[1440px] mx-auto p-8 space-y-8">
+
+    <%-- Page Header --%>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Smart Auto-Allocation</h1>
+            <nav class="text-sm text-gray-400 mt-0.5">
+                <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
+                <span class="mx-1">•</span><span>Auto-Allocate</span>
+            </nav>
+        </div>
+    </div>
+
+    @if (TempData["AllocError"] != null)
+    {
+        <div class="alert alert-danger bg-red-50 border border-red-200 text-red-700 px-5 py-3 rounded-xl text-sm">
+            @TempData["AllocError"]
+        </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Launch Card -->
+        <div class="lg:col-span-2 bg-white rounded-xl card-shadow p-8 space-y-6">
+
+            <div class="flex items-center gap-3 mb-2">
+                <div class="bg-sky-100 p-3 rounded-xl">
+                    <svg class="h-7 w-7 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Run Allocation Engine</h2>
+                    <p class="text-sm text-gray-500">Automatically assigns referees using the Branch &amp; Bound optimisation solver.</p>
+                </div>
+            </div>
+
+            <form method="post" asp-action="AutoAllocate" class="space-y-5">
+                @Html.AntiForgeryToken()
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="space-y-1.5">
+                        <label for="startDate" class="block text-sm font-medium text-gray-600">From Date</label>
+                        <input type="date" id="startDate" name="startDate"
+                               value="@ViewBag.DefaultStart"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="endDate" class="block text-sm font-medium text-gray-600">To Date</label>
+                        <input type="date" id="endDate" name="endDate"
+                               value="@ViewBag.DefaultEnd"
+                               class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="run-allocation-btn"
+                            class="btn-assign text-white px-7 py-3 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Run Auto-Allocation
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- How It Works -->
+        <aside class="space-y-4">
+            <section class="bg-white rounded-xl card-shadow p-6 space-y-4">
+                <h3 class="font-bold text-gray-800 text-base">How It Works</h3>
+                <ul class="space-y-3 text-sm text-gray-600">
+                    <li class="flex items-start gap-2">
+                        <span class="mt-0.5 flex-shrink-0 w-5 h-5 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                        <span>Fetches all matches &amp; referees in the selected range in a single bulk query.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="mt-0.5 flex-shrink-0 w-5 h-5 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                        <span>Enforces hard constraints: availability, conflict of interest, 21-day history, and certification rank.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="mt-0.5 flex-shrink-0 w-5 h-5 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                        <span>Minimises soft-constraint penalties: travel distance (&gt;40 km flagged) &amp; monthly workload balance.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="mt-0.5 flex-shrink-0 w-5 h-5 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                        <span>Saves the optimal schedule directly to the database. You can manually adjust any assignment afterwards.</span>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800 space-y-1">
+                <p class="font-semibold">⚠ Note</p>
+                <p>Running auto-allocation will <strong>overwrite</strong> any existing referee assignments for matches in the selected date range.</p>
+            </section>
+        </aside>
+
+    </div>
+</main>
+
+@section Scripts {
+<script>
+    document.getElementById('run-allocation-btn').addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Running…';
+    });
+</script>
+}
