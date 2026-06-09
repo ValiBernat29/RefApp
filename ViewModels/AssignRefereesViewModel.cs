@@ -32,11 +32,14 @@ public class RefereeOption
 
     public bool IsUnavailable { get; set; }
 
-    /// <summary>Same day AND same hour as this match → hard block.</summary>
+    /// <summary>Same day AND within 5 hours of this match → hard block.</summary>
     public bool HasConflictingMatch { get; set; }
 
-    /// <summary>Same day but different hour → soft warning only.</summary>
+    /// <summary>Same day but more than 5 hours apart → soft warning only.</summary>
     public bool HasOtherMatchThatDay { get; set; }
+
+    /// <summary>Ref lives in the same city as one of the competing teams → hard block (Arad refs exempt).</summary>
+    public bool HasCityConflict { get; set; }
 
     // ── Suitability Scoring (Phase 3) ─────────────────────────────────────
     /// <summary>Computed score; higher = better candidate. Board sees ordering, not the number.</summary>

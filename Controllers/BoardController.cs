@@ -459,14 +459,24 @@ public class BoardController : Controller
             .ToListAsync(cancellationToken);
 
         var eligible = referees
-            .Select(r => new RefereeOption
+            .Select(r =>
             {
-                Id = r.Id,
-                DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
-                Email = r.Email ?? "",
-                IsUnavailable = unavailableRefereeIds.Contains(r.Id),
-                HasConflictingMatch = conflictRefIds.Contains(r.Id),
-                HasOtherMatchThatDay = sameDayDiffTimeRefIds.Contains(r.Id)
+                var homeCity = r.HomeCity?.Trim() ?? "";
+                bool isArad  = homeCity.Equals("Arad", StringComparison.OrdinalIgnoreCase);
+                bool cityConflict = !isArad && !string.IsNullOrEmpty(homeCity) &&
+                    ((!string.IsNullOrEmpty(match.HomeTeam?.City) && match.HomeTeam.City.Trim().Equals(homeCity, StringComparison.OrdinalIgnoreCase)) ||
+                     (!string.IsNullOrEmpty(match.AwayTeam?.City) && match.AwayTeam.City.Trim().Equals(homeCity, StringComparison.OrdinalIgnoreCase)));
+
+                return new RefereeOption
+                {
+                    Id = r.Id,
+                    DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
+                    Email = r.Email ?? "",
+                    IsUnavailable        = unavailableRefereeIds.Contains(r.Id),
+                    HasConflictingMatch  = conflictRefIds.Contains(r.Id),
+                    HasOtherMatchThatDay = sameDayDiffTimeRefIds.Contains(r.Id),
+                    HasCityConflict      = cityConflict
+                };
             })
             .ToList();
 
@@ -502,9 +512,10 @@ public class BoardController : Controller
         Id = o.Id,
         DisplayName = o.DisplayName,
         Email = o.Email,
-        IsUnavailable = o.IsUnavailable,
-        HasConflictingMatch = o.HasConflictingMatch,
-        HasOtherMatchThatDay = o.HasOtherMatchThatDay
+        IsUnavailable        = o.IsUnavailable,
+        HasConflictingMatch  = o.HasConflictingMatch,
+        HasOtherMatchThatDay = o.HasOtherMatchThatDay,
+        HasCityConflict      = o.HasCityConflict
     };
 
     [HttpPost]
@@ -549,6 +560,25 @@ public class BoardController : Controller
         {
             ModelState.AddModelError("", "One or more selected referees are already assigned to another match within 5 hours of this one.");
             return await ReloadAssignView(match, model, cancellationToken);
+        }
+
+        // City conflict guard (post-validation safety net)
+        var submittedRefs = await _context.Users
+            .Where(u => ids.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+        foreach (var r in submittedRefs)
+        {
+            var homeCity = r.HomeCity?.Trim() ?? "";
+            if (string.IsNullOrEmpty(homeCity) || homeCity.Equals("Arad", StringComparison.OrdinalIgnoreCase)) continue;
+            var homeTeamCity = match.HomeTeam?.City?.Trim() ?? "";
+            var awayTeamCity = match.AwayTeam?.City?.Trim() ?? "";
+            if ((!string.IsNullOrEmpty(homeTeamCity) && homeTeamCity.Equals(homeCity, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(awayTeamCity) && awayTeamCity.Equals(homeCity, StringComparison.OrdinalIgnoreCase)))
+            {
+                var name = r.DisplayName ?? r.UserName ?? r.Id;
+                ModelState.AddModelError("", $"{name} cannot officiate a team from their home city ({homeCity}).");
+                return await ReloadAssignView(match, model, cancellationToken);
+            }
         }
 
         _context.MatchAssignments.RemoveRange(match.Assignments);
@@ -603,14 +633,23 @@ public class BoardController : Controller
             .ToListAsync(cancellationToken);
 
         model.EligibleReferees = referees
-            .Select(r => new RefereeOption
+            .Select(r =>
             {
-                Id = r.Id,
-                DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
-                Email = r.Email ?? "",
-                IsUnavailable = unavailableRefereeIds.Contains(r.Id),
-                HasConflictingMatch = conflictRefIds.Contains(r.Id),
-                HasOtherMatchThatDay = sameDayDiffTimeRefIds.Contains(r.Id)
+                var homeCity = r.HomeCity?.Trim() ?? "";
+                bool isArad  = homeCity.Equals("Arad", StringComparison.OrdinalIgnoreCase);
+                bool cityConflict = !isArad && !string.IsNullOrEmpty(homeCity) &&
+                    ((!string.IsNullOrEmpty(match.HomeTeam?.City) && match.HomeTeam.City.Trim().Equals(homeCity, StringComparison.OrdinalIgnoreCase)) ||
+                     (!string.IsNullOrEmpty(match.AwayTeam?.City) && match.AwayTeam.City.Trim().Equals(homeCity, StringComparison.OrdinalIgnoreCase)));
+                return new RefereeOption
+                {
+                    Id = r.Id,
+                    DisplayName = r.DisplayName ?? r.UserName ?? r.Email ?? r.Id,
+                    Email = r.Email ?? "",
+                    IsUnavailable        = unavailableRefereeIds.Contains(r.Id),
+                    HasConflictingMatch  = conflictRefIds.Contains(r.Id),
+                    HasOtherMatchThatDay = sameDayDiffTimeRefIds.Contains(r.Id),
+                    HasCityConflict      = cityConflict
+                };
             })
             .ToList();
 

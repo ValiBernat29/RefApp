@@ -37,14 +37,19 @@
                 {
                     var label = r.DisplayName;
                     var badges = new List<string>();
-                    if (r.RoleMatchBoostApplied) badges.Add("⭐ Role match");
-                    if (r.DistanceKm.HasValue)   badges.Add($"{r.DistanceKm:0.#} km");
-                    if (r.IsUnavailable)          badges.Add("❌ Unavailable");
-                    if (r.HasConflictingMatch)    badges.Add("❌ TIME CONFLICT");
-                    else if (r.HasOtherMatchThatDay) badges.Add("⚠ Match at different hour");
+                    if (r.RoleMatchBoostApplied)     badges.Add("⭐ Role match");
+                    if (r.DistanceKm.HasValue)        badges.Add($"{r.DistanceKm:0.#} km");
+                    if (r.HasCar)                     badges.Add("🚗");
+                    if (r.IsUnavailable)              badges.Add("❌ Unavailable");
+                    if (r.HasCityConflict)            badges.Add("❌ CITY CONFLICT");
+                    else if (r.HasConflictingMatch)   badges.Add("❌ TIME CONFLICT");
+                    else if (r.HasOtherMatchThatDay)  badges.Add("⚠ Match at different hour");
                     if (badges.Count > 0) label += " — " + string.Join(", ", badges);
                     return label;
                 }
+
+                bool IsDisabled(RefApp.ViewModels.RefereeOption r) =>
+                    r.HasConflictingMatch || r.HasCityConflict;
             }
 
             <div class="space-y-1.5">
@@ -53,7 +58,7 @@
                     <option value="">(None)</option>
                     @foreach (var r in Model.EligibleReferees)
                     {
-                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
+                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(IsDisabled(r) ? "disabled" : null)">@BuildLabel(r)</option>
                     }
                 </select>
             </div>
@@ -64,7 +69,7 @@
                     <option value="">(None)</option>
                     @foreach (var r in Model.EligibleRefereesAsst1)
                     {
-                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
+                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(IsDisabled(r) ? "disabled" : null)">@BuildLabel(r)</option>
                     }
                 </select>
             </div>
@@ -75,7 +80,7 @@
                     <option value="">(None)</option>
                     @foreach (var r in Model.EligibleRefereesAsst2)
                     {
-                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(r.HasConflictingMatch ? "disabled" : null)">@BuildLabel(r)</option>
+                        <option value="@r.Id" data-unavailable="@(r.IsUnavailable ? "true" : "false")" disabled="@(IsDisabled(r) ? "disabled" : null)">@BuildLabel(r)</option>
                     }
                 </select>
             </div>
