@@ -57,6 +57,10 @@
                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "users" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Users
                 </a>
+                <a asp-controller="Board" asp-action="RefereeFleet"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "refereefleet" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    Fleet
+                </a>
                 <a asp-controller="Board" asp-action="Teams"
                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "teams" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Teams

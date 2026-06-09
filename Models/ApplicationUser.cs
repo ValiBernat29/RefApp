@@ -34,5 +34,8 @@ public class ApplicationUser : IdentityUser
     public double? Latitude { get; set; }
 
     public double? Longitude { get; set; }
+
+    /// <summary>True when this referee owns/has access to a car for travel to matches.</summary>
+    public bool HasCar { get; set; } = false;
 }
 

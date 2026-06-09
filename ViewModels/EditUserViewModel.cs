@@ -31,4 +31,7 @@ public class EditUserViewModel
 
     [Display(Name = "Preferred Role")]
     public RefereePreferredRole PreferredRole { get; set; } = RefereePreferredRole.None;
+
+    [Display(Name = "Has Car")]
+    public bool HasCar { get; set; } = false;
 }

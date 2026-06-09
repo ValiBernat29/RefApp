@@ -59,4 +59,7 @@ public class RefereeOption
 
     /// <summary>True when the referee's preferred role matches the slot being scored.</summary>
     public bool RoleMatchBoostApplied { get; set; }
+
+    /// <summary>True when this referee has a car available for travel.</summary>
+    public bool HasCar { get; set; }
 }

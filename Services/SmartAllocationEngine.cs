@@ -15,11 +15,15 @@ public class SmartAllocationEngine : ISmartAllocationEngine
 
     // Soft constraint coefficients
     private const double Over40KmPenalty = 500.0;
-    private const double KmPenaltyMultiplier = 1.0; // 1 point per km
-    private const double WorkloadPenaltyMultiplier = 30.0; // 30 points per monthly assignment
-    private const double RoleMatchBonus = 15.0; // -15 points if preferred role matches
-    private const double MissingCoordsDefaultPenalty = 20.0; // penalty if location coords are missing
-    private const double DummyRefereePenalty = 10000.0; // huge penalty for unassigned slots
+    private const double KmPenaltyMultiplier = 1.0;          // 1 point per km
+    private const double WorkloadPenaltyMultiplier = 30.0;   // 30 points per monthly assignment
+    private const double RoleMatchBonus = 15.0;              // −15 points when preferred role matches
+    private const double MissingCoordsDefaultPenalty = 20.0; // penalty when location coords are missing
+    private const double DummyRefereePenalty = 10000.0;       // huge penalty for unassigned slots
+    private const double NoCarPenalty = 800.0;               // penalty when no car on a match team
+
+    // Frequency penalty table (index = number of recent matches for either team)
+    private static readonly double[] FrequencyPenalty = { 0, 15, 35, 60, 1000, 1000 };
 
     private const int MaxSearchStates = 20000; // safety limit to prevent hangs
 
@@ -31,7 +35,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
     public async Task<AllocationResult> AllocateRefereesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         // ── Step 1: Bulk Fetch State from Database ───────────────────────────
-        
+
         // 1. Fetch upcoming matches in range
         var matches = await _context.Matches
             .Include(m => m.HomeTeam)
@@ -65,10 +69,12 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         // 4. Fetch all team referee refusals (conflicts of interest / blocked teams)
         var refusals = await _context.TeamRefereeRefusals.ToListAsync(cancellationToken);
 
-        // 5. Fetch past assignments for the 21-day history check and workload balancing
+        // 5. Fetch past assignments for the 21-day history check, workload balancing, and frequency scoring
         var historyStart = startDate.AddDays(-21);
         var workloadStart = new DateTime(startDate.Year, startDate.Month, 1);
-        var fetchStart = historyStart < workloadStart ? historyStart : workloadStart;
+        // Also go back up to 5 matches per team for frequency scoring (approx 60 days)
+        var frequencyStart = startDate.AddDays(-60);
+        var fetchStart = new[] { historyStart, workloadStart, frequencyStart }.Min();
 
         var pastAssignments = await _context.MatchAssignments
             .Include(a => a.Match)
@@ -79,7 +85,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             .ToListAsync(cancellationToken);
 
         // ── Step 2: Map to Solver-friendly In-Memory Structures ───────────────
-        
+
         var solverRefs = new List<SolverReferee>();
         foreach (var r in referees)
         {
@@ -90,7 +96,8 @@ public class SmartAllocationEngine : ISmartAllocationEngine
                 Rank = r.Rank,
                 PreferredRole = r.PreferredRole,
                 Latitude = r.Latitude,
-                Longitude = r.Longitude
+                Longitude = r.Longitude,
+                HasCar = r.HasCar
             };
 
             // Map unavailabilities
@@ -107,25 +114,23 @@ public class SmartAllocationEngine : ISmartAllocationEngine
                 solverRef.BlockedTeamIds.Add(teamId);
             }
 
-            // Map past officiating history (assignments where match was played)
+            // Map past officiating history (assignments before the allocation window, for 21-day check)
             var refPast = pastAssignments
                 .Where(a => a.RefereeId == r.Id && a.Match.MatchDate < startDate)
                 .ToList();
             foreach (var a in refPast)
             {
                 var matchDate = a.Match.MatchDate;
-                // Add HomeTeam
                 if (!solverRef.PastOfficiatedTeams.ContainsKey(a.Match.HomeTeamId))
                     solverRef.PastOfficiatedTeams[a.Match.HomeTeamId] = new List<DateTime>();
                 solverRef.PastOfficiatedTeams[a.Match.HomeTeamId].Add(matchDate);
 
-                // Add AwayTeam
                 if (!solverRef.PastOfficiatedTeams.ContainsKey(a.Match.AwayTeamId))
                     solverRef.PastOfficiatedTeams[a.Match.AwayTeamId] = new List<DateTime>();
                 solverRef.PastOfficiatedTeams[a.Match.AwayTeamId].Add(matchDate);
             }
 
-            // Map workload count in calendar months
+            // Map workload count per calendar month
             var refWorkloads = pastAssignments
                 .Where(a => a.RefereeId == r.Id)
                 .GroupBy(a => a.Match.MatchDate.ToString("yyyy_MM"))
@@ -135,17 +140,29 @@ public class SmartAllocationEngine : ISmartAllocationEngine
                 solverRef.MonthWorkload[kvp.Key] = kvp.Value;
             }
 
+            // Map recent match frequency per team (last ~5 matches for either team)
+            // Key = teamId, Value = count of recent matches ref officiated involving that team
+            var recentByTeam = pastAssignments
+                .Where(a => a.RefereeId == r.Id && a.Match.MatchDate >= frequencyStart && a.Match.MatchDate < startDate)
+                .SelectMany(a => new[] { a.Match.HomeTeamId, a.Match.AwayTeamId })
+                .GroupBy(tid => tid)
+                .ToDictionary(g => g.Key, g => g.Count());
+            foreach (var kvp in recentByTeam)
+            {
+                solverRef.RecentTeamMatchCount[kvp.Key] = kvp.Value;
+            }
+
             solverRefs.Add(solverRef);
         }
 
-        // Sort matches to process the most constrained ones first (higher leagues, then chronological)
+        // Sort matches: most constrained (higher leagues) first, then chronological
         var sortedMatches = matches
-            .OrderBy(m => m.HomeTeam?.League == League.L4 ? 0 : 
+            .OrderBy(m => m.HomeTeam?.League == League.L4 ? 0 :
                           (m.HomeTeam?.League == League.L5A || m.HomeTeam?.League == League.L5B || m.HomeTeam?.League == League.L5C ? 1 : 2))
             .ThenBy(m => m.MatchDate)
             .ToList();
 
-        // Build list of variables to assign
+        // Build variables: Main, Asst1, Asst2 per match
         var variables = new List<SolverVariable>();
         int varIndex = 0;
         foreach (var m in sortedMatches)
@@ -156,7 +173,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         }
 
         // ── Step 3: Run the Branch & Bound Search Solver ───────────────────────
-        
+
         var currentAssignment = new string?[variables.Count];
         var bestAssignment = new string?[variables.Count];
         double bestPenalty = double.MaxValue;
@@ -166,20 +183,42 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         {
             stateCount++;
             if (stateCount > MaxSearchStates)
-                return; // hit limit, stop searching further branches
+                return;
 
-            // Base Case: All variables assigned
+            // Base Case: All variables assigned — compute car penalty at match level
             if (vIdx == variables.Count)
             {
-                if (currentPenalty < bestPenalty)
+                double finalPenalty = currentPenalty;
+
+                // Check each match: does it have at least one referee with a car?
+                for (int mIdx = 0; mIdx < sortedMatches.Count; mIdx++)
                 {
-                    bestPenalty = currentPenalty;
+                    var mainId  = currentAssignment[mIdx * 3];
+                    var asst1Id = currentAssignment[mIdx * 3 + 1];
+                    var asst2Id = currentAssignment[mIdx * 3 + 2];
+
+                    bool hasCar = false;
+                    foreach (var id in new[] { mainId, asst1Id, asst2Id })
+                    {
+                        if (id != null)
+                        {
+                            var sr = solverRefs.FirstOrDefault(r => r.Id == id);
+                            if (sr?.HasCar == true) { hasCar = true; break; }
+                        }
+                    }
+                    if (!hasCar)
+                        finalPenalty += NoCarPenalty;
+                }
+
+                if (finalPenalty < bestPenalty)
+                {
+                    bestPenalty = finalPenalty;
                     Array.Copy(currentAssignment, bestAssignment, variables.Count);
                 }
                 return;
             }
 
-            // Pruning
+            // Pruning (use currentPenalty without car-check for mid-search comparison)
             if (currentPenalty >= bestPenalty)
                 return;
 
@@ -192,88 +231,92 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             for (int i = 0; i < vIdx; i++)
             {
                 if (variables[i].Match.Id == match.Id && currentAssignment[i] != null)
-                {
                     assignedRefsForThisMatch.Add(currentAssignment[i]!);
-                }
             }
 
-            // Find eligible candidates and compute their local penalty
+            // Build candidate list with penalties
             var candidates = new List<(SolverReferee? Ref, double LocalPenalty)>();
 
-            // 1. Try real referee candidates
             foreach (var r in solverRefs)
             {
-                // -- Hard Constraint Check --
-                
-                // A referee can only be assigned to one role per match
+                // ── Hard Constraints ──────────────────────────────────────────
+
+                // Each referee can only hold one role per match
                 if (assignedRefsForThisMatch.Contains(r.Id))
                     continue;
 
-                // Availability check (unavailability dates)
+                // Unavailability
                 if (r.IsUnavailable(match.MatchDate))
                     continue;
 
-                // Scheduling conflict check (same day AND hour)
+                // Scheduling conflict: same day AND same hour
                 var slotKey = match.MatchDate.ToString("yyyyMMdd_HH");
                 if (r.AssignedSlots.Contains(slotKey))
                     continue;
 
-                // Conflict of interest check (blocked teams)
+                // Conflict of interest (refusal by team)
                 if (r.BlockedTeamIds.Contains(match.HomeTeamId) || r.BlockedTeamIds.Contains(match.AwayTeamId))
                     continue;
 
-                // Certification check
+                // Certification rank requirement
                 if (!MeetsRankRequirement(r.Rank, match.HomeTeam.League))
                     continue;
 
-                // Recent history check (21 days)
+                // 21-day recent history conflict
                 if (HasRecentHistoryConflict(r, match.HomeTeamId, match.MatchDate) ||
                     HasRecentHistoryConflict(r, match.AwayTeamId, match.MatchDate))
                     continue;
 
-                // -- Soft Constraint / Penalty calculation --
+                // ── Soft Constraints / Penalty Calculation ────────────────────
+
                 double penalty = 0.0;
 
-                // Travel Distance Penalty
-                if (r.Latitude.HasValue && r.Longitude.HasValue && match.HomeTeam.Latitude.HasValue && match.HomeTeam.Longitude.HasValue)
+                // 1. Travel Distance Penalty
+                if (r.Latitude.HasValue && r.Longitude.HasValue &&
+                    match.HomeTeam.Latitude.HasValue && match.HomeTeam.Longitude.HasValue)
                 {
-                    var dist = HaversineKm(r.Latitude.Value, r.Longitude.Value, match.HomeTeam.Latitude.Value, match.HomeTeam.Longitude.Value);
+                    var dist = HaversineKm(r.Latitude.Value, r.Longitude.Value,
+                                           match.HomeTeam.Latitude.Value, match.HomeTeam.Longitude.Value);
                     penalty += dist * KmPenaltyMultiplier;
                     if (dist > 40.0)
-                    {
-                        penalty += Over40KmPenalty; // heavy penalty
-                    }
+                        penalty += Over40KmPenalty;
                 }
                 else
                 {
                     penalty += MissingCoordsDefaultPenalty;
                 }
 
-                // Workload Balancing Penalty
+                // 2. Workload Balancing Penalty
                 var monthKey = match.MatchDate.ToString("yyyy_MM");
                 r.MonthWorkload.TryGetValue(monthKey, out var w);
                 penalty += (w + 1) * WorkloadPenaltyMultiplier;
 
-                // Role preference bonus
+                // 3. Role Preference Bonus
                 if (role == MatchRoleType.Main && r.PreferredRole == RefereePreferredRole.MainReferee)
                     penalty -= RoleMatchBonus;
-                else if ((role == MatchRoleType.Assistant1 || role == MatchRoleType.Assistant2) && r.PreferredRole == RefereePreferredRole.AssistantReferee)
+                else if ((role == MatchRoleType.Assistant1 || role == MatchRoleType.Assistant2) &&
+                         r.PreferredRole == RefereePreferredRole.AssistantReferee)
                     penalty -= RoleMatchBonus;
+
+                // 4. Frequency Penalty — how many recent matches involving either team this ref officiated
+                var recentHome = r.RecentTeamMatchCount.TryGetValue(match.HomeTeamId, out var rh) ? rh : 0;
+                var recentAway = r.RecentTeamMatchCount.TryGetValue(match.AwayTeamId, out var ra) ? ra : 0;
+                var recentTotal = Math.Min(recentHome + recentAway, FrequencyPenalty.Length - 1);
+                penalty += FrequencyPenalty[recentTotal];
 
                 candidates.Add((r, penalty));
             }
 
-            // 2. Always offer a Dummy/Unassigned fallback option to avoid failure
+            // Dummy/unassigned fallback (always available, high penalty)
             candidates.Add((null, DummyRefereePenalty));
 
-            // Sort candidates by penalty (lowest first) to guide the greedy search
+            // Sort candidates: lowest penalty first (guides greedy best-first search)
             var sortedCandidates = candidates.OrderBy(c => c.LocalPenalty).ToList();
 
             foreach (var c in sortedCandidates)
             {
                 if (c.Ref != null)
                 {
-                    // Apply assignments to referee's state
                     var slotKey = match.MatchDate.ToString("yyyyMMdd_HH");
                     c.Ref.AssignedSlots.Add(slotKey);
 
@@ -289,20 +332,27 @@ public class SmartAllocationEngine : ISmartAllocationEngine
                     c.Ref.MonthWorkload.TryGetValue(monthKey, out var w);
                     c.Ref.MonthWorkload[monthKey] = w + 1;
 
+                    // Update in-search frequency count for this match's teams
+                    c.Ref.RecentTeamMatchCount.TryGetValue(match.HomeTeamId, out var fh);
+                    c.Ref.RecentTeamMatchCount[match.HomeTeamId] = fh + 1;
+                    c.Ref.RecentTeamMatchCount.TryGetValue(match.AwayTeamId, out var fa);
+                    c.Ref.RecentTeamMatchCount[match.AwayTeamId] = fa + 1;
+
                     currentAssignment[vIdx] = c.Ref.Id;
 
-                    // Recurse
                     Search(vIdx + 1, currentPenalty + c.LocalPenalty);
 
-                    // Revert assignment
+                    // Revert
                     c.Ref.AssignedSlots.Remove(slotKey);
                     c.Ref.PastOfficiatedTeams[match.HomeTeamId].Remove(match.MatchDate);
                     c.Ref.PastOfficiatedTeams[match.AwayTeamId].Remove(match.MatchDate);
                     c.Ref.MonthWorkload[monthKey] = w;
+                    c.Ref.RecentTeamMatchCount[match.HomeTeamId] = fh;
+                    c.Ref.RecentTeamMatchCount[match.AwayTeamId] = fa;
                 }
                 else
                 {
-                    currentAssignment[vIdx] = null; // unassigned
+                    currentAssignment[vIdx] = null;
                     Search(vIdx + 1, currentPenalty + c.LocalPenalty);
                 }
 
@@ -310,71 +360,74 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             }
         }
 
-        // Start search
         Search(0, 0.0);
 
         // ── Step 4: Save Computed Schedule to Database and Build Statistics ───
-        
+
         var warnings = new List<string>();
         int totalMatches = matches.Count;
         int fullyAssigned = 0;
         int partiallyAssigned = 0;
         double totalTravelDist = 0.0;
         int assignedRolesCount = 0;
-
-        // Group assignments by match
-        var assignmentsToSave = new List<MatchAssignment>();
+        int noCarWarnings = 0;
 
         for (int mIdx = 0; mIdx < sortedMatches.Count; mIdx++)
         {
             var match = sortedMatches[mIdx];
-            var mainRefId = bestAssignment[mIdx * 3];
+            var mainRefId  = bestAssignment[mIdx * 3];
             var asst1RefId = bestAssignment[mIdx * 3 + 1];
             var asst2RefId = bestAssignment[mIdx * 3 + 2];
 
             int assignedCount = 0;
-            if (mainRefId != null) assignedCount++;
+            if (mainRefId  != null) assignedCount++;
             if (asst1RefId != null) assignedCount++;
             if (asst2RefId != null) assignedCount++;
 
-            if (assignedCount == 3)
-                fullyAssigned++;
-            else if (assignedCount > 0)
-                partiallyAssigned++;
+            if (assignedCount == 3) fullyAssigned++;
+            else if (assignedCount > 0) partiallyAssigned++;
 
-            if (mainRefId == null)
-                warnings.Add($"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} has no Main Referee assigned.");
-            if (asst1RefId == null)
-                warnings.Add($"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} has no Assistant 1 assigned.");
-            if (asst2RefId == null)
-                warnings.Add($"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} has no Assistant 2 assigned.");
+            if (mainRefId  == null) warnings.Add($"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} has no Main Referee assigned.");
+            if (asst1RefId == null) warnings.Add($"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} has no Assistant 1 assigned.");
+            if (asst2RefId == null) warnings.Add($"Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name} has no Assistant 2 assigned.");
 
-            // Calculate travel distance
+            // Car check
+            bool matchHasCar = false;
             foreach (var refId in new[] { mainRefId, asst1RefId, asst2RefId })
             {
                 if (refId == null) continue;
-                var r = referees.First(referee => referee.Id == refId);
-                if (r.Latitude.HasValue && r.Longitude.HasValue && match.HomeTeam?.Latitude.HasValue == true && match.HomeTeam?.Longitude.HasValue == true)
+                var r = referees.FirstOrDefault(ref_ => ref_.Id == refId);
+                if (r?.HasCar == true) { matchHasCar = true; break; }
+            }
+            if (!matchHasCar && assignedCount > 0)
+            {
+                noCarWarnings++;
+                warnings.Add($"⚠ Match {match.HomeTeam?.Name} vs {match.AwayTeam?.Name}: no referee with a car assigned.");
+            }
+
+            // Travel distance stats
+            foreach (var refId in new[] { mainRefId, asst1RefId, asst2RefId })
+            {
+                if (refId == null) continue;
+                var r = referees.FirstOrDefault(ref_ => ref_.Id == refId);
+                if (r?.Latitude.HasValue == true && r.Longitude.HasValue &&
+                    match.HomeTeam?.Latitude.HasValue == true && match.HomeTeam.Longitude.HasValue)
                 {
-                    var dist = HaversineKm(r.Latitude.Value, r.Longitude.Value, match.HomeTeam.Latitude.Value, match.HomeTeam.Longitude.Value);
+                    var dist = HaversineKm(r.Latitude.Value, r.Longitude.Value,
+                                           match.HomeTeam.Latitude.Value, match.HomeTeam.Longitude.Value);
                     totalTravelDist += dist;
                     assignedRolesCount++;
                 }
             }
 
-            // Remove existing assignments for this match in the DB
+            // Persist to DB
             _context.MatchAssignments.RemoveRange(match.Assignments);
 
-            // Add new assignments
-            if (mainRefId != null)
-                _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = mainRefId, RoleType = MatchRoleType.Main });
-            if (asst1RefId != null)
-                _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = asst1RefId, RoleType = MatchRoleType.Assistant1 });
-            if (asst2RefId != null)
-                _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = asst2RefId, RoleType = MatchRoleType.Assistant2 });
+            if (mainRefId  != null) _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = mainRefId,  RoleType = MatchRoleType.Main });
+            if (asst1RefId != null) _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = asst1RefId, RoleType = MatchRoleType.Assistant1 });
+            if (asst2RefId != null) _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = asst2RefId, RoleType = MatchRoleType.Assistant2 });
         }
 
-        // Save to Database
         await _context.SaveChangesAsync(cancellationToken);
 
         return new AllocationResult
@@ -386,6 +439,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             PartiallyAssignedMatchesCount = partiallyAssigned,
             TotalTravelDistanceKm = Math.Round(totalTravelDist, 1),
             AvgTravelDistanceKm = assignedRolesCount > 0 ? Math.Round(totalTravelDist / assignedRolesCount, 1) : 0,
+            NoCarWarningsCount = noCarWarnings,
             Warnings = warnings
         };
     }
@@ -396,13 +450,9 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         if (rank == RefereeRank.Above) return true;
 
         if (league == League.L4)
-        {
             return rank == RefereeRank.L4;
-        }
         else // L5A, L5B, L5C, L6
-        {
             return rank == RefereeRank.L4 || rank == RefereeRank.L6_5;
-        }
     }
 
     private static bool HasRecentHistoryConflict(SolverReferee r, int teamId, DateTime matchDate)
@@ -412,9 +462,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             foreach (var d in dates)
             {
                 if (Math.Abs((matchDate.Date - d.Date).Days) <= 21)
-                {
                     return true;
-                }
             }
         }
         return false;
@@ -433,7 +481,8 @@ public class SmartAllocationEngine : ISmartAllocationEngine
 
     private static double ToRad(double deg) => deg * Math.PI / 180;
 
-    // Helper classes for Solver state
+    // ── Solver internal state classes ──────────────────────────────────────────
+
     private class SolverReferee
     {
         public string Id { get; set; } = string.Empty;
@@ -442,11 +491,14 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         public RefereePreferredRole PreferredRole { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
+        public bool HasCar { get; set; }
         public HashSet<int> BlockedTeamIds { get; set; } = new();
         public HashSet<string> AssignedSlots { get; set; } = new();
         public List<(DateTime Start, DateTime End)> Unavailabilities { get; set; } = new();
         public Dictionary<int, List<DateTime>> PastOfficiatedTeams { get; set; } = new();
         public Dictionary<string, int> MonthWorkload { get; set; } = new();
+        /// <summary>Count of recent matches (last ~60 days) this referee officiated involving each team.</summary>
+        public Dictionary<int, int> RecentTeamMatchCount { get; set; } = new();
 
         public bool IsUnavailable(DateTime matchDate)
         {
@@ -454,9 +506,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             foreach (var interval in Unavailabilities)
             {
                 if (dateOnly >= interval.Start.Date && dateOnly <= interval.End.Date)
-                {
                     return true;
-                }
             }
             return false;
         }

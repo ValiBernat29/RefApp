@@ -14,6 +14,8 @@ public class AllocationResult
     public int PartiallyAssignedMatchesCount { get; set; }
     public double TotalTravelDistanceKm { get; set; }
     public double AvgTravelDistanceKm { get; set; }
+    /// <summary>Number of matches where no car-equipped referee could be assigned.</summary>
+    public int NoCarWarningsCount { get; set; }
     public List<string> Warnings { get; set; } = new List<string>();
 }
 

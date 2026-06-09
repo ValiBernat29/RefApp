@@ -114,6 +114,9 @@ public class RefereeScoringService
                     score += RoleMatchBonus;
                     option.RoleMatchBoostApplied = true;
                 }
+
+                // --- Has Car ---
+                option.HasCar = refUser.HasCar;
             }
 
             // --- Rule 3: Frequency (Home + Away combined) ---

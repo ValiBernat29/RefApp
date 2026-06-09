@@ -651,7 +651,8 @@ public class BoardController : Controller
             Role = userRole,
             HomeCity = user.HomeCity,
             Rank = user.Rank,
-            PreferredRole = user.PreferredRole
+            PreferredRole = user.PreferredRole,
+            HasCar = user.HasCar
         };
         return View(vm);
     }
@@ -691,6 +692,7 @@ public class BoardController : Controller
         user.DisplayName = model.DisplayName ?? string.Empty;
         user.Rank = model.Rank;
         user.PreferredRole = model.PreferredRole;
+        user.HasCar = model.HasCar;
 
         // Geocode HomeCity if it changed
         var newCity = (model.HomeCity ?? "").Trim();
@@ -738,6 +740,33 @@ public class BoardController : Controller
 
         TempData["Success"] = "Account updated successfully.";
         return RedirectToAction(nameof(Users));
+    }
+
+    // ── Referee Fleet Management ─────────────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> RefereeFleet(CancellationToken cancellationToken)
+    {
+        var referees = await _context.Users
+            .Where(u => _context.UserRoles.Any(ur =>
+                ur.UserId == u.Id &&
+                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Referee")))
+            .OrderBy(u => u.DisplayName ?? u.UserName ?? u.Email ?? "")
+            .ToListAsync(cancellationToken);
+        return View(referees);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleCar(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        user.HasCar = !user.HasCar;
+        await _userManager.UpdateAsync(user);
+
+        return Json(new { hasCar = user.HasCar });
     }
 
     [HttpPost]
