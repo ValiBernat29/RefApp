@@ -4,7 +4,6 @@
 
 <main class="max-w-[1440px] mx-auto p-8 space-y-8">
 
-    <%-- Page Header --%>
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Smart Auto-Allocation</h1>
@@ -105,9 +104,10 @@
 
 @section Scripts {
 <script>
-    document.getElementById('run-allocation-btn').addEventListener('click', function() {
-        this.disabled = true;
-        this.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Running…';
+    document.getElementById('run-allocation-btn').closest('form').addEventListener('submit', function() {
+        var btn = document.getElementById('run-allocation-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Running…';
     });
 </script>
 }
