@@ -999,4 +999,59 @@ public class BoardController : Controller
         return View("AutoAllocateResult");
     }
 
+    // ── Referee Route Map ────────────────────────────────────────────────────
+
+    [HttpGet]
+    public IActionResult RefereeMap() => View();
+
+    /// <summary>
+    /// Returns referees + upcoming matches as JSON for the interactive map.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> MapData(CancellationToken cancellationToken)
+    {
+        var referees = await _context.Users
+            .Where(u => _context.UserRoles.Any(ur =>
+                ur.UserId == u.Id &&
+                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Referee")))
+            .ToListAsync(cancellationToken);
+
+        var matches = await _context.Matches
+            .Include(m => m.HomeTeam)
+            .Include(m => m.AwayTeam)
+            .Include(m => m.Assignments)
+            .Where(m => m.MatchDate >= DateTime.Today)
+            .OrderBy(m => m.MatchDate)
+            .Take(60)
+            .ToListAsync(cancellationToken);
+
+        var result = new
+        {
+            referees = referees.Select(r => new
+            {
+                id           = r.Id,
+                name         = r.DisplayName ?? r.UserName ?? r.Id,
+                city         = r.HomeCity ?? "—",
+                lat          = r.Latitude,
+                lon          = r.Longitude,
+                hasCar       = r.HasCar,
+                preferredRole = r.PreferredRole.ToString(),
+                rank         = r.Rank.ToString()
+            }),
+            matches = matches.Select(m => new
+            {
+                id          = m.Id,
+                homeTeam    = m.HomeTeam?.Name ?? "?",
+                awayTeam    = m.AwayTeam?.Name ?? "?",
+                date        = m.MatchDate.ToString("ddd dd MMM yyyy HH:mm"),
+                lat         = m.HomeTeam?.Latitude,
+                lon         = m.HomeTeam?.Longitude,
+                city        = m.HomeTeam?.City ?? "",
+                assignedIds = m.Assignments.Select(a => a.RefereeId).ToList()
+            })
+        };
+
+        return Json(result);
+    }
+
 }

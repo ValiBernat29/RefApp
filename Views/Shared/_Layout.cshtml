@@ -65,6 +65,10 @@
                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && (action == "autoallocate" || action == "autoallocateresult") ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Auto-Allocate
                 </a>
+                <a asp-controller="Board" asp-action="RefereeMap"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "refereemap" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                    🗺 Route Map
+                </a>
             }
             else if (User.IsInRole("Referee"))
             {
