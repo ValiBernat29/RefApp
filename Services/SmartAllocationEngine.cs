@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,19 +13,25 @@ public class SmartAllocationEngine : ISmartAllocationEngine
 {
     private readonly ApplicationDbContext _context;
 
-    // ── Penalty weights ───────────────────────────────────────────────────────
+    // â”€â”€ Penalty weights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private const double Over40KmPenalty          = 500.0;
     private const double KmPenaltyMultiplier       = 1.0;
-
-    // FIXED: was 30 — caused in-batch workload to dominate role/distance scores.
-    // With multiplier=8 a ref needs 4 extra assignments before losing to someone 30km farther.
     private const double WorkloadPenaltyMultiplier = 8.0;
-
     private const double RoleMatchBonus            = 15.0;
-    private const double WrongRolePenalty          = 800.0;
+
+    // ROLE PRIORITY: raised from 800 â†’ 5000 so wrong-role is nearly equivalent to leaving unassigned.
+    // Combined with LocalSearchNullPenalty, the local search will actively unassign wrong-role refs
+    // and then re-fill the slot with the correct-role ref in the next iteration.
+    private const double WrongRolePenalty          = 5000.0;
+
+    // When a slot currently holds a wrong-role ref, local search treats NULL as costing only this
+    // much â€” less than WrongRolePenalty â€” so it prefers emptying the slot over keeping the wrong ref.
+    // The empty slot is then filled with a correct-role ref in the very next local-search pass.
+    private const double LocalSearchNullPenalty    = 2500.0;
+
     private const double SameTeamMonthlyPenalty    = 300.0;
     private const double MissingCoordsDefaultPenalty = 20.0;
-    private const double DummyRefereePenalty       = 10000.0;
+    private const double DummyRefereePenalty       = 10000.0; // hard unassigned (B&B fallback)
     private const double NoCarPenalty              = 800.0;
     private const double SpreadPenaltyWeight       = 3.0;
     private const double OnTheWayBonus             = 40.0;
@@ -45,7 +51,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
     public async Task<AllocationResult> AllocateRefereesAsync(
         DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        // ── Step 1: Bulk Fetch ────────────────────────────────────────────────
+        // â”€â”€ Step 1: Bulk Fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         var matches = await _context.Matches
             .Include(m => m.HomeTeam)
@@ -84,7 +90,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             .Where(a => a.Match.MatchDate >= fetchStart && a.Match.MatchDate <= endDate)
             .ToListAsync(cancellationToken);
 
-        // ── Step 2: Build Solver State ─────────────────────────────────────────
+        // â”€â”€ Step 2: Build Solver State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         var thirtyDaysAgo = startDate.AddDays(-30);
         var sixtyDaysAgo  = startDate.AddDays(-60);
@@ -117,7 +123,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
                 AddTeamDate(sr.PastOfficiatedTeams, a.Match.AwayTeamId, a.Match.MatchDate);
             }
 
-            // Historical monthly workload (PAST only — not current batch)
+            // Historical monthly workload (PAST only â€” not current batch)
             foreach (var g in pastAssignments
                 .Where(a => a.RefereeId == r.Id)
                 .GroupBy(a => a.Match.MatchDate.ToString("yyyy_MM")))
@@ -157,7 +163,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
 
         int V = variables.Count;
 
-        // ── Step 3: Branch & Bound ─────────────────────────────────────────────
+        // â”€â”€ Step 3: Branch & Bound â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         var currentAssignment = new string?[V];
         var bestAssignment    = new string?[V];
@@ -291,14 +297,14 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             bestPenalty = ComputeTotalObjective(variables, bestAssignment, solverRefs, sortedMatches);
         }
 
-        // ── Step 4: Local Search (2-opt slot swaps) ───────────────────────────
+        // â”€â”€ Step 4: Local Search (2-opt slot swaps) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         //
         // After B&B (or greedy seed), try to improve by swapping individual slots.
         // This corrects suboptimal choices caused by the B&B state limit.
 
         LocalSearch(variables, bestAssignment, solverRefs, sortedMatches, startDate);
 
-        // ── Step 5: Persist and Build Result ──────────────────────────────────
+        // â”€â”€ Step 5: Persist and Build Result â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         var warnings = new List<string>();
         int fullyAssigned = 0, partiallyAssigned = 0;
@@ -328,7 +334,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
             if (!matchHasCar && cnt > 0)
             {
                 noCarWarnings++;
-                warnings.Add($"⚠ {match.HomeTeam?.Name} vs {match.AwayTeam?.Name}: no ref with a car assigned.");
+                warnings.Add($"âš  {match.HomeTeam?.Name} vs {match.AwayTeam?.Name}: no ref with a car assigned.");
             }
 
             foreach (var refId in new[] { mainRefId, asst1RefId, asst2RefId })
@@ -369,7 +375,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         };
     }
 
-    // ── Local Search ───────────────────────────────────────────────────────────
+    // â”€â”€ Local Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>
     /// Iterates over all slots and tries replacing the assigned ref with every feasible
@@ -445,13 +451,24 @@ public class SmartAllocationEngine : ISmartAllocationEngine
                     }
                 }
 
-                // Also try removing the ref (assigning null) if not dummy
+                // Also try removing the ref (assigning null).
+                // KEY FIX: if the current ref is in the WRONG role, treat null as cheaper than
+                // keeping them. The freed slot will be re-filled with a correct-role ref on the
+                // very next local-search pass, effectively performing a two-step swap that pure
+                // single-slot search would otherwise miss.
                 if (currentRefId != null)
                 {
+                    var curRef = solverRefs.FirstOrDefault(sr => sr.Id == currentRefId);
+                    bool isWrongRole = curRef != null
+                        && curRef.PreferredRole != RefereePreferredRole.None
+                        && IsWrongRoleForSlot(curRef, role);
+
                     assignment[vIdx] = null;
-                    double nullSlot       = DummyRefereePenalty;
+                    // Wrong-role: prefer null (2500) over keeping them (5000+).
+                    // Correct/no-pref role: prefer keeping them (DummyRefereePenalty = 10000 makes null unattractive).
+                    double nullSlot       = isWrongRole ? LocalSearchNullPenalty : DummyRefereePenalty;
                     double nullMatchBonus = ComputeSingleMatchBonus(mIdx, assignment, solverRefs, match);
-                    double nullDelta = (nullSlot - currentSlot) + (nullMatchBonus - currentMatchBonus);
+                    double nullDelta      = (nullSlot - currentSlot) + (nullMatchBonus - currentMatchBonus);
                     assignment[vIdx] = currentRefId;
 
                     if (nullDelta < bestDelta)
@@ -472,7 +489,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         }
     }
 
-    // ── Greedy Seed ────────────────────────────────────────────────────────────
+    // â”€â”€ Greedy Seed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void GreedySeed(
         List<SolverVariable> variables,
@@ -530,7 +547,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         }
     }
 
-    // ── Objective helpers ─────────────────────────────────────────────────────
+    // â”€â”€ Objective helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private double ComputeTotalObjective(
         List<SolverVariable> variables,
@@ -602,7 +619,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         }
         else penalty += MissingCoordsDefaultPenalty;
 
-        // 2. Workload — historical + in-batch count (no +1 base; first assignment costs 0)
+        // 2. Workload â€” historical + in-batch count (no +1 base; first assignment costs 0)
         r.MonthWorkload.TryGetValue(match.MatchDate.ToString("yyyy_MM"), out var histW);
         batchWorkload.TryGetValue(r.Id, out var batchW);
         penalty += (histW + batchW) * WorkloadPenaltyMultiplier;
@@ -695,7 +712,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         return total;
     }
 
-    // ── Hard-constraint helpers ────────────────────────────────────────────────
+    // â”€â”€ Hard-constraint helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static bool HasCityConflict(SolverReferee r, Match match)
     {
@@ -707,6 +724,12 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         return (!string.IsNullOrEmpty(homeCity) && homeCity.Equals(r.HomeCity, StringComparison.OrdinalIgnoreCase))
             || (!string.IsNullOrEmpty(awayCity) && awayCity.Equals(r.HomeCity, StringComparison.OrdinalIgnoreCase));
     }
+    /// <summary>Returns true when a ref's preferred role does NOT match the slot being filled.</summary>
+    private static bool IsWrongRoleForSlot(SolverReferee r, MatchRoleType role) =>
+        (role == MatchRoleType.Main && r.PreferredRole == RefereePreferredRole.AssistantReferee) ||
+        ((role == MatchRoleType.Assistant1 || role == MatchRoleType.Assistant2)
+            && r.PreferredRole == RefereePreferredRole.MainReferee);
+
 
     private static bool MeetsRankRequirement(RefereeRank rank, League league)
     {
@@ -742,7 +765,7 @@ public class SmartAllocationEngine : ISmartAllocationEngine
 
     private static double ToRad(double deg) => deg * Math.PI / 180;
 
-    // ── Solver internal classes ────────────────────────────────────────────────
+    // â”€â”€ Solver internal classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private class SolverReferee
     {
@@ -776,3 +799,4 @@ public class SmartAllocationEngine : ISmartAllocationEngine
         public MatchRoleType Role { get; set; }
     }
 }
+

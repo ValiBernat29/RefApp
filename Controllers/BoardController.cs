@@ -1054,4 +1054,40 @@ public class BoardController : Controller
         return Json(result);
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveMapAssignment([FromBody] MapAssignmentDto dto, CancellationToken cancellationToken)
+    {
+        if (dto == null) return BadRequest(new { error = "Invalid payload." });
+        var match = await _context.Matches
+            .Include(m => m.HomeTeam).Include(m => m.AwayTeam).Include(m => m.Assignments)
+            .FirstOrDefaultAsync(m => m.Id == dto.MatchId, cancellationToken);
+        if (match == null) return NotFound(new { error = "Match not found." });
+        var ids = new[] { dto.MainRefereeId, dto.Assistant1Id, dto.Assistant2Id }.Where(id => !string.IsNullOrEmpty(id)).ToList();
+        if (ids.Distinct().Count() != ids.Count) return BadRequest(new { error = "Same referee in multiple roles." });
+        if (ids.Any()) {
+            var submittedRefs = await _context.Users.Where(u => ids.Contains(u.Id)).ToListAsync(cancellationToken);
+            foreach (var r in submittedRefs) {
+                var homeCity = r.HomeCity?.Trim() ?? "";
+                if (string.IsNullOrEmpty(homeCity) || homeCity.Equals("Arad", StringComparison.OrdinalIgnoreCase)) continue;
+                var htc = match.HomeTeam?.City?.Trim() ?? ""; var atc = match.AwayTeam?.City?.Trim() ?? "";
+                if ((!string.IsNullOrEmpty(htc) && htc.Equals(homeCity, StringComparison.OrdinalIgnoreCase)) || (!string.IsNullOrEmpty(atc) && atc.Equals(homeCity, StringComparison.OrdinalIgnoreCase)))
+                    return BadRequest(new { error = $"{r.DisplayName ?? r.UserName} cannot officiate a team from their home city ({homeCity})." });
+            }
+        }
+        _context.MatchAssignments.RemoveRange(match.Assignments);
+        if (!string.IsNullOrEmpty(dto.MainRefereeId)) _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = dto.MainRefereeId, RoleType = MatchRoleType.Main });
+        if (!string.IsNullOrEmpty(dto.Assistant1Id))  _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = dto.Assistant1Id,  RoleType = MatchRoleType.Assistant1 });
+        if (!string.IsNullOrEmpty(dto.Assistant2Id))  _context.MatchAssignments.Add(new MatchAssignment { MatchId = match.Id, RefereeId = dto.Assistant2Id,  RoleType = MatchRoleType.Assistant2 });
+        await _context.SaveChangesAsync(cancellationToken);
+        return Ok(new { success = true });
+    }
+}
+
+public class MapAssignmentDto
+{
+    public int     MatchId        { get; set; }
+    public string? MainRefereeId  { get; set; }
+    public string? Assistant1Id   { get; set; }
+    public string? Assistant2Id   { get; set; }
 }
