@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -233,7 +233,10 @@ public class SmartAllocationEngine : ISmartAllocationEngine
 
             candidates.Add((null, DummyRefereePenalty));
 
-            foreach (var c in candidates.OrderBy(c => c.Penalty))
+            // Role-correct refs always explored before wrong-role — belt-and-suspenders on top of WrongRolePenalty=5000.
+            foreach (var c in candidates
+                .OrderBy(c => c.Ref != null && IsWrongRoleForSlot(c.Ref, role) ? 1 : 0)
+                .ThenBy(c => c.Penalty))
             {
                 currentAssignment[vIdx] = c.Ref?.Id;
 

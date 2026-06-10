@@ -1,4 +1,4 @@
-﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     Layout = null;
     var afToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
@@ -9,23 +9,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="af-token" content="@Html.Raw(afToken)" />
-    <title>Route Map Â· RefApp</title>
+    <title>Route Map &middot; RefApp</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Inter',sans-serif;display:flex;height:100vh;overflow:hidden;background:#0f172a}
 
-        /* â”€â”€ Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         #panel{width:370px;flex-shrink:0;background:#1e293b;border-right:1px solid #334155;display:flex;flex-direction:column;overflow:hidden}
 
         #panel-header{padding:14px 18px;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;gap:10px}
         #panel-header a{color:rgba(255,255,255,.8);text-decoration:none;font-size:12px}
         #panel-header a:hover{color:#fff}
         #panel-header h1{font-size:15px;font-weight:700;color:#fff}
-        #panel-header span{font-size:11px;color:rgba(255,255,255,.7)}
+        #panel-header .sub{font-size:11px;color:rgba(255,255,255,.7)}
 
-        /* sections */
         .psec{padding:12px 16px;border-bottom:1px solid #334155}
         .plabel{display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
 
@@ -33,20 +31,13 @@
         select.psel:focus,input.pinp:focus{border-color:#0ea5e9}
         select.psel option{background:#1e293b}
 
-        /* â”€â”€ Assignment Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         #assign-panel{padding:12px 16px;border-bottom:1px solid #334155;display:none}
         #assign-panel.visible{display:block}
-        .assign-title{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+        .assign-title{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 
-        .slot-card{
-            display:flex;align-items:center;gap:10px;
-            padding:9px 11px;border-radius:9px;border:1.5px solid #334155;
-            margin-bottom:6px;cursor:pointer;transition:all .15s;
-            background:#0f172a;position:relative;
-        }
+        .slot-card{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;border:1.5px solid #334155;margin-bottom:6px;cursor:pointer;transition:all .15s;background:#0f172a}
         .slot-card:hover{border-color:#475569}
         .slot-card.active{border-color:#0ea5e9;background:rgba(14,165,233,.08);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
-        .slot-card.filled{border-color:#334155}
 
         .slot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
         .slot-dot.main{background:#0ea5e9}
@@ -60,23 +51,17 @@
         .slot-clear{background:none;border:none;color:#475569;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;flex-shrink:0}
         .slot-clear:hover{color:#f87171}
 
-        .active-hint{font-size:11px;color:#0ea5e9;margin-top:6px;text-align:center;animation:pulse 1.5s ease-in-out infinite}
+        .active-hint{font-size:11px;color:#0ea5e9;margin-top:6px;text-align:center}
         @@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+        .active-hint{animation:pulse 1.5s ease-in-out infinite}
 
-        #save-btn{
-            width:100%;margin-top:10px;padding:10px;border-radius:9px;
-            background:linear-gradient(135deg,#10b981,#0ea5e9);
-            border:none;color:#fff;font-size:13px;font-weight:700;
-            cursor:pointer;transition:opacity .15s;
-        }
+        #save-btn{width:100%;margin-top:10px;padding:10px;border-radius:9px;background:linear-gradient(135deg,#10b981,#0ea5e9);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
         #save-btn:hover{opacity:.9}
         #save-btn:disabled{opacity:.4;cursor:not-allowed}
-
         #save-msg{font-size:12px;text-align:center;margin-top:6px;min-height:16px}
         #save-msg.ok{color:#34d399}
         #save-msg.err{color:#f87171}
 
-        /* â”€â”€ Routing section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .route-row{display:flex;gap:8px;align-items:center}
         #route-btn{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
         #route-btn:disabled{opacity:.5}
@@ -85,13 +70,11 @@
         #buffer-km{flex:1;accent-color:#0ea5e9}
         #buffer-val{font-size:12px;font-weight:600;color:#0ea5e9;min-width:38px;text-align:right}
 
-        /* â”€â”€ Route info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         #route-info{padding:8px 16px;background:#0f172a;border-bottom:1px solid #1e293b;display:none;gap:16px}
         #route-info.visible{display:flex}
         .ri-stat span:first-child{display:block;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
         .ri-stat span:last-child{font-size:14px;font-weight:700;color:#e2e8f0}
 
-        /* â”€â”€ Ref list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         #ref-list-hdr{padding:8px 16px 4px;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
         #ref-list{flex:1;overflow-y:auto;padding:6px 10px}
         #ref-list::-webkit-scrollbar{width:4px}
@@ -102,7 +85,6 @@
         .rc.on-route{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.25)}
         .rc.assigned-here{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3)}
         .rc.no-coords{opacity:.4;pointer-events:none}
-        .rc.sel-slot-pick{outline:2px solid #0ea5e9;outline-offset:1px}
 
         .rc-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;background:#334155;color:#94a3b8}
         .rc.on-route .rc-av{background:rgba(16,185,129,.25);color:#34d399}
@@ -119,17 +101,14 @@
         .tag-km{background:rgba(251,191,36,.1);color:#fbbf24}
         .tag-asgn{background:rgba(99,102,241,.2);color:#a5b4fc}
 
-        /* assign btn on each ref card */
         .rc-assign-btn{background:none;border:1px solid #334155;border-radius:6px;color:#64748b;font-size:11px;padding:3px 7px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .12s}
         .rc-assign-btn:hover{border-color:#0ea5e9;color:#0ea5e9}
         .rc-assign-btn.hidden{display:none}
 
-        /* â”€â”€ Legend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         #legend{padding:10px 16px;border-top:1px solid #334155;display:flex;gap:12px;flex-wrap:wrap}
         .leg{display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8}
         .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
-        /* â”€â”€ Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         #map{flex:1;position:relative}
         #loading{position:absolute;inset:0;background:rgba(15,23,42,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px}
         #loading p{color:#94a3b8;font-size:14px}
@@ -140,47 +119,38 @@
         #map-hint .icon{font-size:40px;margin-bottom:8px}
         #map-hint p{color:#94a3b8;font-size:13px;margin-top:6px}
 
-        /* Leaflet popup dark */
         .leaflet-popup-content-wrapper{background:#1e293b;border:1px solid #334155;border-radius:10px;color:#e2e8f0}
         .leaflet-popup-tip{background:#1e293b}
         .leaflet-popup-content{margin:12px 14px;font-family:'Inter',sans-serif;font-size:13px}
         .pp-title{font-weight:700;font-size:14px;margin-bottom:4px}
         .pp-row{color:#94a3b8;margin-top:3px}
         .pp-row b{color:#e2e8f0}
-        .pp-onroute{margin-top:8px;padding:3px 8px;border-radius:6px;background:rgba(16,185,129,.15);color:#34d399;font-size:12px;font-weight:600;display:inline-block}
         .pp-assign-btn{display:block;margin-top:8px;width:100%;padding:6px;border-radius:7px;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer}
         .pp-assign-btn:hover{opacity:.85}
     </style>
 </head>
 <body>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     SIDE PANEL
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="panel">
 
-    <!-- Header -->
     <div id="panel-header">
         <div style="flex:1">
-            <a href="/Board">â† Dashboard</a>
-            <h1>đź—ş Route Map</h1>
-            <span>Arad County Â· Referee Locations</span>
+            <a href="/Board">&larr; Dashboard</a>
+            <h1>Route Map</h1>
+            <span class="sub">Arad County &middot; Referee Locations</span>
         </div>
     </div>
 
-    <!-- Match selector -->
     <div class="psec">
         <label class="plabel">Select Match</label>
         <select id="match-select" class="psel">
-            <option value="">â€” pick a match â€”</option>
+            <option value="">&mdash; pick a match &mdash;</option>
         </select>
     </div>
 
-    <!-- Assignment panel (shown when match selected) -->
     <div id="assign-panel">
-        <div class="assign-title">đź“‹ Assign Referees</div>
+        <div class="assign-title">Assign Referees</div>
 
-        <!-- Main slot -->
         <div class="slot-card" id="slot-main" onclick="activateSlot('main')">
             <div class="slot-dot main"></div>
             <div class="slot-info">
@@ -188,10 +158,9 @@
                 <div class="slot-name" id="slot-main-name" style="display:none"></div>
                 <div class="slot-hint" id="slot-main-hint">Click to activate, then pick a ref</div>
             </div>
-            <button class="slot-clear" id="slot-main-clear" style="display:none" onclick="clearSlot(event,'main')">âś•</button>
+            <button class="slot-clear" id="slot-main-clear" style="display:none" onclick="clearSlot(event,'main')">&times;</button>
         </div>
 
-        <!-- Asst 1 slot -->
         <div class="slot-card" id="slot-asst1" onclick="activateSlot('asst1')">
             <div class="slot-dot asst"></div>
             <div class="slot-info">
@@ -199,10 +168,9 @@
                 <div class="slot-name" id="slot-asst1-name" style="display:none"></div>
                 <div class="slot-hint" id="slot-asst1-hint">Click to activate, then pick a ref</div>
             </div>
-            <button class="slot-clear" id="slot-asst1-clear" style="display:none" onclick="clearSlot(event,'asst1')">âś•</button>
+            <button class="slot-clear" id="slot-asst1-clear" style="display:none" onclick="clearSlot(event,'asst1')">&times;</button>
         </div>
 
-        <!-- Asst 2 slot -->
         <div class="slot-card" id="slot-asst2" onclick="activateSlot('asst2')">
             <div class="slot-dot asst"></div>
             <div class="slot-info">
@@ -210,43 +178,39 @@
                 <div class="slot-name" id="slot-asst2-name" style="display:none"></div>
                 <div class="slot-hint" id="slot-asst2-hint">Click to activate, then pick a ref</div>
             </div>
-            <button class="slot-clear" id="slot-asst2-clear" style="display:none" onclick="clearSlot(event,'asst2')">âś•</button>
+            <button class="slot-clear" id="slot-asst2-clear" style="display:none" onclick="clearSlot(event,'asst2')">&times;</button>
         </div>
 
         <div class="active-hint" id="active-hint" style="display:none">
-            â†“ Now click a referee below or on the map
+            &darr; Click a referee below or on the map
         </div>
 
         <button id="save-btn" onclick="saveAssignment()">Save Assignments</button>
         <div id="save-msg"></div>
     </div>
 
-    <!-- Routing -->
     <div class="psec">
         <label class="plabel">Route From</label>
         <div class="route-row">
-            <input id="origin-city" class="pinp" type="text" value="Arad" placeholder="Origin cityâ€¦" style="flex:1"/>
+            <input id="origin-city" class="pinp" type="text" value="Arad" placeholder="Origin city..." style="flex:1"/>
             <button id="route-btn" onclick="computeRoute()">Show Route</button>
         </div>
         <div class="buf-row">
-            <label>Buffer Â±</label>
+            <label>Buffer &plusmn;</label>
             <input type="range" id="buffer-km" min="2" max="30" value="10" step="1" oninput="onBufferChange(this.value)" />
             <span id="buffer-val">10 km</span>
         </div>
     </div>
 
-    <!-- Route stats -->
     <div id="route-info">
-        <div class="ri-stat"><span>Distance</span><span id="ri-dist">â€”</span></div>
-        <div class="ri-stat"><span>Duration</span><span id="ri-dur">â€”</span></div>
-        <div class="ri-stat"><span>On Route</span><span id="ri-onroute">â€”</span></div>
+        <div class="ri-stat"><span>Distance</span><span id="ri-dist">&mdash;</span></div>
+        <div class="ri-stat"><span>Duration</span><span id="ri-dur">&mdash;</span></div>
+        <div class="ri-stat"><span>On Route</span><span id="ri-onroute">&mdash;</span></div>
     </div>
 
-    <!-- Ref list header -->
     <div id="ref-list-hdr">Referees <span id="ref-count" style="color:#0ea5e9"></span></div>
     <div id="ref-list"></div>
 
-    <!-- Legend -->
     <div id="legend">
         <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div> Referee</div>
         <div class="leg"><div class="leg-dot" style="background:#10b981"></div> On route</div>
@@ -255,55 +219,47 @@
     </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     MAP
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="map">
-    <div id="loading"><div class="spinner"></div><p>Loadingâ€¦</p></div>
-    <div id="map-hint">
-        <div class="icon">đź—ş</div>
+    <div id="loading"><div class="spinner"></div><p>Loading...</p></div>
+    <div id="map-hint" style="display:none">
+        <div class="icon">&#x1F5FA;</div>
         <strong style="color:#e2e8f0">Select a match above</strong>
         <p>The road route + buffer zone will appear here.<br>Refs within the buffer are highlighted as "on the way".</p>
     </div>
 </div>
 
-<!-- Libs -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@@turf/turf@6.5.0/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@turf/turf@@6.5.0/turf.min.js"></script>
 
 <script>
-// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ARAD_CENTER = [46.1866, 21.3123];
 const OSRM_BASE   = 'https://router.project-osrm.org/route/v1/driving';
 const AF_TOKEN    = document.querySelector('meta[name="af-token"]').content;
 
-// â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MAP, REFS = [], MATCHES = [], SELECTED_MATCH = null;
 let refMarkers = {}, matchMarkerObj = null;
 let routeLayer = null, bufferLayer = null, routeGeoJSON = null;
+let currentOnRouteIds = [], currentDistMap = {};
 
-// Assignment state
 const slots = { main: null, asst1: null, asst2: null };
-let activeSlot = null; // 'main' | 'asst1' | 'asst2' | null
+let activeSlot = null;
 
-// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 document.addEventListener('DOMContentLoaded', async () => {
     MAP = L.map('map', { zoomControl: false }).setView(ARAD_CENTER, 10);
     L.control.zoom({ position: 'topright' }).addTo(MAP);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: 'Â© OpenStreetMap Â© CARTO', maxZoom: 19
+        attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
     }).addTo(MAP);
 
-    // Arad hub marker
     L.circleMarker(ARAD_CENTER, { radius: 8, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: .9 })
-        .addTo(MAP).bindPopup('<div class="pp-title">đź“Ť Arad</div><div class="pp-row">Route origin</div>');
+        .addTo(MAP)
+        .bindPopup('<div class="pp-title">Arad</div><div class="pp-row">Route origin</div>');
 
     await loadData();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('map-hint').style.display = 'block';
 });
 
-// â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadData() {
     const res  = await fetch('/Board/MapData');
     const data = await res.json();
@@ -319,200 +275,205 @@ function populateDropdown() {
     MATCHES.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.id;
-        opt.textContent = `${m.date}  Â·  ${m.homeTeam} vs ${m.awayTeam}${!m.lat ? ' (no coords)' : ''}`;
+        opt.textContent = m.date + '  \u00B7  ' + m.homeTeam + ' vs ' + m.awayTeam + (!m.lat ? ' (no coords)' : '');
         sel.appendChild(opt);
     });
     sel.addEventListener('change', onMatchSelected);
 }
 
-// â”€â”€ Icons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function refIcon(color, label) {
     return L.divIcon({
         className: '',
         iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -18],
-        html: `<div style="width:32px;height:32px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.5);">${label}</div>`
+        html: '<div style="width:32px;height:32px;border-radius:50%;background:' + color + ';border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.5);">' + label + '</div>'
     });
 }
+
 function matchIcon() {
     return L.divIcon({
         className: '',
         iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -42],
-        html: `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ef4444);border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(0,0,0,.5);">âš˝</div>`
+        html: '<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ef4444);border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.5);">M</div>'
     });
 }
 
-// â”€â”€ Markers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function renderRefMarkers(onRouteIds = [], assignedIds = []) {
+function renderRefMarkers(onRouteIds, assignedIds) {
+    onRouteIds  = onRouteIds  || [];
+    assignedIds = assignedIds || [];
     Object.values(refMarkers).forEach(m => MAP.removeLayer(m));
     refMarkers = {};
     REFS.forEach(r => {
         if (!r.lat || !r.lon) return;
-        const color = assignedIds.includes(r.id) ? '#6366f1' : onRouteIds.includes(r.id) ? '#10b981' : '#3b82f6';
-        const m = L.marker([r.lat, r.lon], { icon: refIcon(color, (r.name||'?')[0].toUpperCase()) }).addTo(MAP);
+        var color = assignedIds.includes(r.id) ? '#6366f1' : onRouteIds.includes(r.id) ? '#10b981' : '#3b82f6';
+        var m = L.marker([r.lat, r.lon], { icon: refIcon(color, (r.name||'?')[0].toUpperCase()) }).addTo(MAP);
         m.bindPopup(buildRefPopup(r));
-        m.on('click', () => handleRefClick(r));
+        m.on('click', function() { handleRefClick(r); });
         refMarkers[r.id] = m;
     });
 }
 
 function buildRefPopup(r) {
-    const hasSlot = activeSlot !== null;
-    return `<div class="pp-title">${r.name}</div>
-        <div class="pp-row">đź“Ť <b>${r.city}</b></div>
-        <div class="pp-row">â­ <b>${r.preferredRole}</b></div>
-        ${r.hasCar ? '<div class="pp-row">đźš— Has car</div>' : ''}
-        ${hasSlot ? `<button class="pp-assign-btn" onclick="handleRefClick({id:'${r.id}',name:'${r.name.replace(/'/g,"\\'")}',preferredRole:'${r.preferredRole}',hasCar:${r.hasCar},lat:${r.lat||null},lon:${r.lon||null},city:'${r.city}'})">Assign to ${slotLabel(activeSlot)}</button>` : ''}`;
+    var roleText = r.preferredRole === 'MainReferee' ? 'Main Referee' :
+                   r.preferredRole === 'AssistantReferee' ? 'Assistant Referee' : 'No preference';
+    var html = '<div class="pp-title">' + r.name + '</div>' +
+               '<div class="pp-row">City: <b>' + r.city + '</b></div>' +
+               '<div class="pp-row">Role: <b>' + roleText + '</b></div>' +
+               (r.hasCar ? '<div class="pp-row">Has a car</div>' : '');
+    if (activeSlot) {
+        html += '<button class="pp-assign-btn" onclick="assignFromPopup(\'' + r.id.replace(/'/g,"\\'") + '\')">Assign to ' + slotLabel(activeSlot) + '</button>';
+    }
+    return html;
 }
 
-// â”€â”€ Ref List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function renderRefList(onRouteIds = [], distMap = {}) {
-    const container = document.getElementById('ref-list');
-    container.innerHTML = '';
-    const assignedIds = [slots.main?.id, slots.asst1?.id, slots.asst2?.id].filter(Boolean);
+function assignFromPopup(refId) {
+    var r = REFS.find(function(x){ return x.id === refId; });
+    if (r) handleRefClick(r);
+}
 
-    const sorted = [...REFS].sort((a, b) => {
-        const aAss = assignedIds.includes(a.id), bAss = assignedIds.includes(b.id);
-        const aOn  = onRouteIds.includes(a.id),  bOn  = onRouteIds.includes(b.id);
+function renderRefList(onRouteIds, distMap) {
+    onRouteIds = onRouteIds || [];
+    distMap    = distMap    || {};
+    var container = document.getElementById('ref-list');
+    container.innerHTML = '';
+    var assignedIds = [slots.main && slots.main.id, slots.asst1 && slots.asst1.id, slots.asst2 && slots.asst2.id].filter(Boolean);
+
+    var sorted = REFS.slice().sort(function(a, b) {
+        var aAss = assignedIds.includes(a.id), bAss = assignedIds.includes(b.id);
+        var aOn  = onRouteIds.includes(a.id),  bOn  = onRouteIds.includes(b.id);
         if (aAss !== bAss) return aAss ? -1 : 1;
-        if (aOn !== bOn)   return aOn  ? -1 : 1;
+        if (aOn  !== bOn)  return aOn  ? -1 : 1;
         return (a.name||'').localeCompare(b.name||'');
     });
 
-    sorted.forEach(r => {
-        const hasCoords  = !!(r.lat && r.lon);
-        const onRoute    = onRouteIds.includes(r.id);
-        const isAssigned = assignedIds.includes(r.id);
-        const distKm     = distMap[r.id];
+    sorted.forEach(function(r) {
+        var hasCoords  = !!(r.lat && r.lon);
+        var onRoute    = onRouteIds.includes(r.id);
+        var isAssigned = assignedIds.includes(r.id);
+        var distKm     = distMap[r.id];
 
-        const div = document.createElement('div');
+        var roleBadge = r.preferredRole === 'MainReferee'
+            ? '<span class="tag tag-main">Main</span>'
+            : r.preferredRole === 'AssistantReferee'
+            ? '<span class="tag tag-asst">Asst</span>' : '';
+
+        var div = document.createElement('div');
         div.className = 'rc' +
-            (onRoute    ? ' on-route'     : '') +
+            (onRoute    ? ' on-route'      : '') +
             (isAssigned ? ' assigned-here' : '') +
-            (!hasCoords ? ' no-coords'    : '');
+            (!hasCoords ? ' no-coords'     : '');
         div.dataset.id = r.id;
-        div.innerHTML = `
-            <div class="rc-av">${(r.name||'?')[0].toUpperCase()}</div>
-            <div class="rc-info">
-                <div class="rc-name">${r.name}</div>
-                <div class="rc-meta">${r.city}${!hasCoords?' Â· <i>no coords</i>':''}</div>
-                <div class="rc-tags">
-                    ${r.hasCar ? '<span class="tag tag-car">đźš— Car</span>' : ''}
-                    ${r.preferredRole==='MainReferee' ? '<span class="tag tag-main">Main</span>' : ''}
-                    ${r.preferredRole==='AssistantReferee' ? '<span class="tag tag-asst">Asst</span>' : ''}
-                    ${onRoute && distKm!=null ? `<span class="tag tag-km">${distKm}km off route</span>` : ''}
-                    ${isAssigned ? `<span class="tag tag-asgn">${getSlotForRef(r.id)}</span>` : ''}
-                </div>
-            </div>
-            <button class="rc-assign-btn ${activeSlot?'':'hidden'}" onclick="event.stopPropagation();handleRefClick(${JSON.stringify(r)})">+ Assign</button>`;
+        div.innerHTML =
+            '<div class="rc-av">' + (r.name||'?')[0].toUpperCase() + '</div>' +
+            '<div class="rc-info">' +
+                '<div class="rc-name">' + r.name + '</div>' +
+                '<div class="rc-meta">' + r.city + (!hasCoords ? ' &middot; <i>no coords</i>' : '') + '</div>' +
+                '<div class="rc-tags">' +
+                    (r.hasCar ? '<span class="tag tag-car">Car</span>' : '') +
+                    roleBadge +
+                    (onRoute && distKm != null ? '<span class="tag tag-km">' + distKm + 'km off route</span>' : '') +
+                    (isAssigned ? '<span class="tag tag-asgn">' + getSlotForRef(r.id) + '</span>' : '') +
+                '</div>' +
+            '</div>' +
+            '<button class="rc-assign-btn' + (activeSlot ? '' : ' hidden') + '" onclick="event.stopPropagation();handleRefClick(' + JSON.stringify(r) + ')">+ Assign</button>';
 
         if (hasCoords) {
-            div.addEventListener('click', (e) => {
+            div.addEventListener('click', function(e) {
                 if (e.target.classList.contains('rc-assign-btn')) return;
                 if (activeSlot) { handleRefClick(r); return; }
                 MAP.flyTo([r.lat, r.lon], 13, { duration: .8 });
-                refMarkers[r.id]?.openPopup();
+                if (refMarkers[r.id]) refMarkers[r.id].openPopup();
                 highlightCard(r.id);
             });
         }
         container.appendChild(div);
     });
 
-    document.getElementById('ref-count').textContent =
-        onRouteIds.length ? `Â· ${onRouteIds.length} on route` : `(${REFS.length})`;
+    var countEl = document.getElementById('ref-count');
+    countEl.textContent = onRouteIds.length ? ('(' + onRouteIds.length + ' on route)') : ('(' + REFS.length + ')');
 }
 
 function highlightCard(id) {
-    document.querySelectorAll('.rc').forEach(c => c.style.outline = '');
-    const c = document.querySelector(`.rc[data-id="${id}"]`);
+    document.querySelectorAll('.rc').forEach(function(c){ c.style.outline=''; });
+    var c = document.querySelector('.rc[data-id="' + id + '"]');
     if (c) { c.style.outline = '2px solid #0ea5e9'; c.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
 }
+
 function getSlotForRef(id) {
-    if (slots.main?.id===id)  return 'Main';
-    if (slots.asst1?.id===id) return 'Asst1';
-    if (slots.asst2?.id===id) return 'Asst2';
+    if (slots.main  && slots.main.id  === id) return 'Main';
+    if (slots.asst1 && slots.asst1.id === id) return 'Asst1';
+    if (slots.asst2 && slots.asst2.id === id) return 'Asst2';
     return '';
 }
 
-// â”€â”€ Match selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function onMatchSelected() {
-    const id = parseInt(document.getElementById('match-select').value);
-    SELECTED_MATCH = MATCHES.find(m => m.id === id) || null;
+    var id = parseInt(document.getElementById('match-select').value);
+    SELECTED_MATCH = MATCHES.find(function(m){ return m.id === id; }) || null;
     clearRoute();
     resetSlots();
-
     if (!SELECTED_MATCH) {
         document.getElementById('assign-panel').classList.remove('visible');
         document.getElementById('map-hint').style.display = 'block';
         renderRefList();
         return;
     }
-
     document.getElementById('map-hint').style.display = 'none';
     document.getElementById('assign-panel').classList.add('visible');
-
-    // Pre-populate slots from existing assignment
-    if (SELECTED_MATCH.mainRefereeId)  prePopulateSlot('main',  SELECTED_MATCH.mainRefereeId);
-    if (SELECTED_MATCH.assistant1Id)   prePopulateSlot('asst1', SELECTED_MATCH.assistant1Id);
-    if (SELECTED_MATCH.assistant2Id)   prePopulateSlot('asst2', SELECTED_MATCH.assistant2Id);
-
+    if (SELECTED_MATCH.mainRefereeId) prePopulateSlot('main',  SELECTED_MATCH.mainRefereeId);
+    if (SELECTED_MATCH.assistant1Id)  prePopulateSlot('asst1', SELECTED_MATCH.assistant1Id);
+    if (SELECTED_MATCH.assistant2Id)  prePopulateSlot('asst2', SELECTED_MATCH.assistant2Id);
     placeMatchMarker();
     computeRoute();
 }
 
 function prePopulateSlot(slotKey, refId) {
-    const r = REFS.find(r => r.id === refId);
+    var r = REFS.find(function(x){ return x.id === refId; });
     if (r) assignToSlot(slotKey, r);
 }
 
-// â”€â”€ Slot logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function slotLabel(slotKey) {
-    return slotKey === 'main' ? 'Main Referee' : slotKey === 'asst1' ? 'Assistant 1' : 'Assistant 2';
+function slotLabel(k) {
+    return k === 'main' ? 'Main Referee' : k === 'asst1' ? 'Assistant 1' : 'Assistant 2';
 }
 
 function activateSlot(slotKey) {
-    // If already active, deactivate
     if (activeSlot === slotKey) { deactivateSlot(); return; }
     activeSlot = slotKey;
-    ['main','asst1','asst2'].forEach(k => {
-        document.getElementById(`slot-${k}`).classList.toggle('active', k === slotKey);
+    ['main','asst1','asst2'].forEach(function(k) {
+        document.getElementById('slot-' + k).classList.toggle('active', k === slotKey);
     });
     document.getElementById('active-hint').style.display = 'block';
-    // Refresh list to show assign buttons
     renderRefList(currentOnRouteIds, currentDistMap);
-    // Refresh map popups
-    REFS.forEach(r => { if (r.lat && r.lon) refMarkers[r.id]?.setPopupContent(buildRefPopup(r)); });
+    REFS.forEach(function(r){ if (r.lat && r.lon && refMarkers[r.id]) refMarkers[r.id].setPopupContent(buildRefPopup(r)); });
 }
 
 function deactivateSlot() {
     activeSlot = null;
-    ['main','asst1','asst2'].forEach(k => document.getElementById(`slot-${k}`).classList.remove('active'));
+    ['main','asst1','asst2'].forEach(function(k){ document.getElementById('slot-' + k).classList.remove('active'); });
     document.getElementById('active-hint').style.display = 'none';
     renderRefList(currentOnRouteIds, currentDistMap);
-    REFS.forEach(r => { if (r.lat && r.lon) refMarkers[r.id]?.setPopupContent(buildRefPopup(r)); });
+    REFS.forEach(function(r){ if (r.lat && r.lon && refMarkers[r.id]) refMarkers[r.id].setPopupContent(buildRefPopup(r)); });
 }
 
 function assignToSlot(slotKey, r) {
-    // Remove from any other slot first
-    ['main','asst1','asst2'].forEach(k => { if (slots[k]?.id === r.id && k !== slotKey) clearSlotData(k); });
-
+    ['main','asst1','asst2'].forEach(function(k){ if (slots[k] && slots[k].id === r.id && k !== slotKey) clearSlotData(k); });
     slots[slotKey] = r;
-    const nameEl  = document.getElementById(`slot-${slotKey}-name`);
-    const hintEl  = document.getElementById(`slot-${slotKey}-hint`);
-    const clearEl = document.getElementById(`slot-${slotKey}-clear`);
-    nameEl.textContent = r.name + (r.hasCar ? ' đźš—' : '') + (r.preferredRole==='MainReferee'?' [Main]':r.preferredRole==='AssistantReferee'?' [Asst]':'');
+    var nameEl  = document.getElementById('slot-' + slotKey + '-name');
+    var hintEl  = document.getElementById('slot-' + slotKey + '-hint');
+    var clearEl = document.getElementById('slot-' + slotKey + '-clear');
+    var badge   = r.preferredRole === 'MainReferee' ? ' [Main]' : r.preferredRole === 'AssistantReferee' ? ' [Asst]' : '';
+    nameEl.textContent = r.name + (r.hasCar ? ' (Car)' : '') + badge;
     nameEl.style.display = 'block';
-    hintEl.style.display = 'none';
+    hintEl.style.display  = 'none';
     clearEl.style.display = 'block';
-    document.getElementById(`slot-${slotKey}`).classList.add('filled');
+    document.getElementById('slot-' + slotKey).classList.add('filled');
     deactivateSlot();
 }
 
 function clearSlotData(slotKey) {
     slots[slotKey] = null;
-    document.getElementById(`slot-${slotKey}-name`).style.display = 'none';
-    document.getElementById(`slot-${slotKey}-hint`).style.display = 'block';
-    document.getElementById(`slot-${slotKey}-clear`).style.display = 'none';
-    document.getElementById(`slot-${slotKey}`).classList.remove('filled');
+    document.getElementById('slot-' + slotKey + '-name').style.display  = 'none';
+    document.getElementById('slot-' + slotKey + '-hint').style.display  = 'block';
+    document.getElementById('slot-' + slotKey + '-clear').style.display = 'none';
+    document.getElementById('slot-' + slotKey).classList.remove('filled');
 }
 
 function clearSlot(event, slotKey) {
@@ -522,51 +483,46 @@ function clearSlot(event, slotKey) {
 }
 
 function resetSlots() {
-    ['main','asst1','asst2'].forEach(k => clearSlotData(k));
+    ['main','asst1','asst2'].forEach(clearSlotData);
     deactivateSlot();
     setSaveMsg('', '');
 }
 
 function handleRefClick(r) {
     if (!activeSlot || !SELECTED_MATCH) return;
-    // Guard: can't assign same ref twice to same match
-    const already = ['main','asst1','asst2'].filter(k => k !== activeSlot && slots[k]?.id === r.id);
-    if (already.length) { setSaveMsg(`${r.name} is already in ${slotLabel(already[0])}`, 'err'); return; }
+    var already = ['main','asst1','asst2'].filter(function(k){ return k !== activeSlot && slots[k] && slots[k].id === r.id; });
+    if (already.length) { setSaveMsg(r.name + ' is already in ' + slotLabel(already[0]), 'err'); return; }
     assignToSlot(activeSlot, r);
     renderRefList(currentOnRouteIds, currentDistMap);
-    // Update marker color
-    const isAssignedNow = [slots.main?.id, slots.asst1?.id, slots.asst2?.id].includes(r.id);
-    if (r.lat && r.lon) refMarkers[r.id]?.setIcon(refIcon(isAssignedNow ? '#6366f1' : '#3b82f6', (r.name||'?')[0].toUpperCase()));
+    var assignedNow = [slots.main && slots.main.id, slots.asst1 && slots.asst1.id, slots.asst2 && slots.asst2.id].filter(Boolean);
+    if (r.lat && r.lon && refMarkers[r.id]) {
+        refMarkers[r.id].setIcon(refIcon(assignedNow.includes(r.id) ? '#6366f1' : '#3b82f6', (r.name||'?')[0].toUpperCase()));
+    }
     setSaveMsg('', '');
 }
 
-// â”€â”€ Save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function saveAssignment() {
     if (!SELECTED_MATCH) return;
-    const btn = document.getElementById('save-btn');
-    btn.disabled = true; btn.textContent = 'Savingâ€¦';
-
-    const payload = {
+    var btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    var payload = {
         matchId:       SELECTED_MATCH.id,
-        mainRefereeId: slots.main?.id  || null,
-        assistant1Id:  slots.asst1?.id || null,
-        assistant2Id:  slots.asst2?.id || null
+        mainRefereeId: slots.main  ? slots.main.id  : null,
+        assistant1Id:  slots.asst1 ? slots.asst1.id : null,
+        assistant2Id:  slots.asst2 ? slots.asst2.id : null
     };
-
     try {
-        const res = await fetch('/Board/SaveMapAssignment', {
+        var res  = await fetch('/Board/SaveMapAssignment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': AF_TOKEN },
             body: JSON.stringify(payload)
         });
-        const data = await res.json();
+        var data = await res.json();
         if (res.ok) {
-            setSaveMsg('âś“ Saved!', 'ok');
-            // Update local match data
+            setSaveMsg('Saved!', 'ok');
             SELECTED_MATCH.mainRefereeId = payload.mainRefereeId;
             SELECTED_MATCH.assistant1Id  = payload.assistant1Id;
             SELECTED_MATCH.assistant2Id  = payload.assistant2Id;
-            SELECTED_MATCH.assignedIds   = [payload.mainRefereeId, payload.assistant1Id, payload.assistant2Id].filter(Boolean);
         } else {
             setSaveMsg(data.error || 'Save failed.', 'err');
         }
@@ -577,90 +533,89 @@ async function saveAssignment() {
 }
 
 function setSaveMsg(msg, cls) {
-    const el = document.getElementById('save-msg');
+    var el = document.getElementById('save-msg');
     el.textContent = msg;
-    el.className = cls ? `ok ${cls}` : '';
+    el.className   = cls;
 }
 
-// â”€â”€ Match marker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function placeMatchMarker() {
     if (matchMarkerObj) { MAP.removeLayer(matchMarkerObj); matchMarkerObj = null; }
     if (!SELECTED_MATCH.lat || !SELECTED_MATCH.lon) return;
     matchMarkerObj = L.marker([SELECTED_MATCH.lat, SELECTED_MATCH.lon], { icon: matchIcon() }).addTo(MAP);
-    matchMarkerObj.bindPopup(`<div class="pp-title">âš˝ ${SELECTED_MATCH.homeTeam} vs ${SELECTED_MATCH.awayTeam}</div><div class="pp-row">đź“… ${SELECTED_MATCH.date}</div><div class="pp-row">đź“Ť ${SELECTED_MATCH.city||'?'}</div>`);
+    matchMarkerObj.bindPopup(
+        '<div class="pp-title">' + SELECTED_MATCH.homeTeam + ' vs ' + SELECTED_MATCH.awayTeam + '</div>' +
+        '<div class="pp-row">' + SELECTED_MATCH.date + '</div>' +
+        '<div class="pp-row">' + (SELECTED_MATCH.city || 'Unknown city') + '</div>'
+    );
 }
 
-// â”€â”€ Routing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-let currentOnRouteIds = [], currentDistMap = {};
-
 async function geocodeCity(city) {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ro&q=${encodeURIComponent(city + ', Romania')}`, { headers: { 'Accept-Language': 'en' } });
-    const d = await r.json();
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ro&q=' + encodeURIComponent(city + ', Romania');
+    var res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    var d   = await res.json();
     return d.length ? { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) } : null;
 }
 
 async function computeRoute() {
-    if (!SELECTED_MATCH?.lat || !SELECTED_MATCH?.lon) return;
-    const originCity = (document.getElementById('origin-city').value || 'Arad').trim();
-    const btn = document.getElementById('route-btn'); btn.textContent='â€¦'; btn.disabled=true;
+    if (!SELECTED_MATCH || !SELECTED_MATCH.lat || !SELECTED_MATCH.lon) return;
+    var originCity = (document.getElementById('origin-city').value || 'Arad').trim();
+    var btn = document.getElementById('route-btn');
+    btn.textContent = '...'; btn.disabled = true;
 
-    let origin = ARAD_CENTER;
+    var origin = ARAD_CENTER;
     if (originCity.toLowerCase() !== 'arad') {
-        const g = await geocodeCity(originCity);
+        var g = await geocodeCity(originCity);
         if (g) origin = [g.lat, g.lon];
     }
 
-    const dest = [SELECTED_MATCH.lat, SELECTED_MATCH.lon];
-    const url  = `${OSRM_BASE}/${origin[1]},${origin[0]};${dest[1]},${dest[0]}?overview=full&geometries=geojson`;
-    let rd;
-    try { rd = await (await fetch(url)).json(); } catch(e) { btn.textContent='Show Route'; btn.disabled=false; return; }
+    var dest = [SELECTED_MATCH.lat, SELECTED_MATCH.lon];
+    var url  = OSRM_BASE + '/' + origin[1] + ',' + origin[0] + ';' + dest[1] + ',' + dest[0] + '?overview=full&geometries=geojson';
+    var rd;
+    try { rd = await (await fetch(url)).json(); }
+    catch(e) { btn.textContent = 'Show Route'; btn.disabled = false; return; }
 
-    if (!rd.routes?.length) { btn.textContent='Show Route'; btn.disabled=false; return; }
+    if (!rd.routes || !rd.routes.length) { btn.textContent = 'Show Route'; btn.disabled = false; return; }
 
-    const route = rd.routes[0];
+    var route = rd.routes[0];
     routeGeoJSON = route.geometry;
     document.getElementById('ri-dist').textContent = (route.distance/1000).toFixed(1) + ' km';
     document.getElementById('ri-dur').textContent  = Math.round(route.duration/60) + ' min';
     document.getElementById('route-info').classList.add('visible');
-
     renderRouteBuffer(routeGeoJSON);
-    btn.textContent='Show Route'; btn.disabled=false;
+    btn.textContent = 'Show Route'; btn.disabled = false;
 }
 
 function renderRouteBuffer(geojson) {
-    if (routeLayer)  { MAP.removeLayer(routeLayer);  routeLayer=null; }
-    if (bufferLayer) { MAP.removeLayer(bufferLayer); bufferLayer=null; }
+    if (routeLayer)  { MAP.removeLayer(routeLayer);  routeLayer  = null; }
+    if (bufferLayer) { MAP.removeLayer(bufferLayer); bufferLayer = null; }
 
-    const bufKm = parseInt(document.getElementById('buffer-km').value) || 10;
-    routeLayer  = L.geoJSON(geojson, { style: { color:'#0ea5e9', weight:5, opacity:.85 } }).addTo(MAP);
+    var bufKm = parseInt(document.getElementById('buffer-km').value) || 10;
+    routeLayer = L.geoJSON(geojson, { style: { color:'#0ea5e9', weight:5, opacity:.85 } }).addTo(MAP);
 
-    const line     = turf.lineString(geojson.coordinates);
-    const buffered = turf.buffer(line, bufKm, { units: 'kilometers' });
+    var line     = turf.lineString(geojson.coordinates);
+    var buffered = turf.buffer(line, bufKm, { units: 'kilometers' });
     bufferLayer = L.geoJSON(buffered, { style: { fillColor:'#0ea5e9', fillOpacity:.09, color:'#0ea5e9', weight:1.5, opacity:.4, dashArray:'6 4' } }).addTo(MAP);
 
-    // Identify on-route refs
     currentOnRouteIds = []; currentDistMap = {};
-    REFS.forEach(r => {
+    REFS.forEach(function(r) {
         if (!r.lat || !r.lon) return;
-        const pt = turf.point([r.lon, r.lat]);
+        var pt = turf.point([r.lon, r.lat]);
         if (turf.booleanPointInPolygon(pt, buffered)) {
             currentOnRouteIds.push(r.id);
-            const nearest = turf.nearestPointOnLine(line, pt, { units:'kilometers' });
+            var nearest = turf.nearestPointOnLine(line, pt, { units:'kilometers' });
             currentDistMap[r.id] = nearest.properties.dist.toFixed(1);
         }
     });
 
-    const assignedIds = [slots.main?.id, slots.asst1?.id, slots.asst2?.id].filter(Boolean);
-    // Update marker colors
-    REFS.forEach(r => {
+    var assignedIds = [slots.main && slots.main.id, slots.asst1 && slots.asst1.id, slots.asst2 && slots.asst2.id].filter(Boolean);
+    REFS.forEach(function(r) {
         if (!r.lat || !r.lon) return;
-        const color = assignedIds.includes(r.id) ? '#6366f1' : currentOnRouteIds.includes(r.id) ? '#10b981' : '#3b82f6';
-        refMarkers[r.id]?.setIcon(refIcon(color, (r.name||'?')[0].toUpperCase()));
+        var color = assignedIds.includes(r.id) ? '#6366f1' : currentOnRouteIds.includes(r.id) ? '#10b981' : '#3b82f6';
+        if (refMarkers[r.id]) refMarkers[r.id].setIcon(refIcon(color, (r.name||'?')[0].toUpperCase()));
     });
 
-    MAP.fitBounds(bufferLayer.getBounds(), { padding:[40,40] });
-    document.getElementById('ri-onroute').textContent = currentOnRouteIds.length + ' ref' + (currentOnRouteIds.length!==1?'s':'');
-    document.getElementById('legend').querySelector('span')?.remove?.();
+    MAP.fitBounds(bufferLayer.getBounds(), { padding: [40, 40] });
+    document.getElementById('ri-onroute').textContent = currentOnRouteIds.length + ' ref' + (currentOnRouteIds.length !== 1 ? 's' : '');
     renderRefList(currentOnRouteIds, currentDistMap);
 }
 
@@ -670,13 +625,15 @@ function onBufferChange(val) {
 }
 
 function clearRoute() {
-    if (routeLayer)  { MAP.removeLayer(routeLayer);  routeLayer=null; }
-    if (bufferLayer) { MAP.removeLayer(bufferLayer); bufferLayer=null; }
-    routeGeoJSON = null; currentOnRouteIds=[]; currentDistMap={};
+    if (routeLayer)  { MAP.removeLayer(routeLayer);  routeLayer  = null; }
+    if (bufferLayer) { MAP.removeLayer(bufferLayer); bufferLayer = null; }
+    routeGeoJSON = null; currentOnRouteIds = []; currentDistMap = {};
     document.getElementById('route-info').classList.remove('visible');
-    REFS.forEach(r => { if (r.lat && r.lon) refMarkers[r.id]?.setIcon(refIcon('#3b82f6', (r.name||'?')[0].toUpperCase())); });
+    REFS.forEach(function(r) {
+        if (r.lat && r.lon && refMarkers[r.id])
+            refMarkers[r.id].setIcon(refIcon('#3b82f6', (r.name||'?')[0].toUpperCase()));
+    });
 }
 </script>
 </body>
 </html>
-
