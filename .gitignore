@@ -29,3 +29,10 @@ appsettings.Development.json
 
 # Tooling
 .vscode/
+
+# Stray local files
+.gitconfig_check
+
+# Frontend (Vue/Vite) - built output is produced by CI
+ClientApp/node_modules/
+wwwroot/dist/

@@ -72,45 +72,16 @@ public static class DbInitializer
             }
         }
 
-        var boardEmail = "board@example.com";
-        var boardUser = await userManager.FindByEmailAsync(boardEmail);
+        // Seed accounts. Credentials come from configuration (Seed:BoardEmail / Seed:BoardPassword,
+        // Seed:RefereeEmail / Seed:RefereePassword). Demo defaults apply only in Development;
+        // elsewhere an account is created only when a password is explicitly configured.
+        var config = services.GetRequiredService<IConfiguration>();
+        var isDevelopment = services.GetRequiredService<IHostEnvironment>().IsDevelopment();
 
-        if (boardUser == null)
-        {
-            boardUser = new ApplicationUser
-            {
-                UserName = boardEmail,
-                Email = boardEmail,
-                EmailConfirmed = true,
-                DisplayName = "Board User"
-            };
-
-            var result = await userManager.CreateAsync(boardUser, "Board123!");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(boardUser, "Board");
-            }
-        }
-
-        var refereeEmail = "referee@example.com";
-        var refereeUser = await userManager.FindByEmailAsync(refereeEmail);
-
-        if (refereeUser == null)
-        {
-            refereeUser = new ApplicationUser
-            {
-                UserName = refereeEmail,
-                Email = refereeEmail,
-                EmailConfirmed = true,
-                DisplayName = "Referee User"
-            };
-
-            var result = await userManager.CreateAsync(refereeUser, "Referee123!");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(refereeUser, "Referee");
-            }
-        }
+        await SeedUserAsync(userManager, config, isDevelopment, "Board", "Board User",
+            defaultEmail: "board@example.com", defaultPassword: "Board123!");
+        await SeedUserAsync(userManager, config, isDevelopment, "Referee", "Referee User",
+            defaultEmail: "referee@example.com", defaultPassword: "Referee123!");
 
         await SeedL4FixturesAsync(context);
         await SeedL5AFixturesAsync(context);
@@ -129,6 +100,37 @@ public static class DbInitializer
 
         // Geocode any teams that have a City but no coordinates yet
         await GeocodeTeamsWithMissingCoordsAsync(context, services);
+    }
+
+    private static async Task SeedUserAsync(
+        UserManager<ApplicationUser> userManager,
+        IConfiguration config,
+        bool isDevelopment,
+        string role,
+        string displayName,
+        string defaultEmail,
+        string defaultPassword)
+    {
+        var email = config[$"Seed:{role}Email"] ?? (isDevelopment ? defaultEmail : null);
+        var password = config[$"Seed:{role}Password"] ?? (isDevelopment ? defaultPassword : null);
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            return;
+
+        if (await userManager.FindByEmailAsync(email) != null)
+            return;
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            DisplayName = displayName
+        };
+
+        var result = await userManager.CreateAsync(user, password);
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(user, role);
     }
 
     private static string GetLocation(string homeTeam)
