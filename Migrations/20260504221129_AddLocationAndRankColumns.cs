@@ -13,6 +13,12 @@ namespace RefApp.Migrations
         {
             // ── AspNetUsers ───────────────────────────────────────────────────
 
+            // The statements below are SQL Server-only patches for databases created before
+            // InitialCreate was consolidated. On any other provider (SQLite for development),
+            // InitialCreate already creates all of these columns and tables, so there is nothing to do.
+            if (migrationBuilder.ActiveProvider != "Microsoft.EntityFrameworkCore.SqlServer")
+                return;
+
             // Add Rank column if it doesn't exist yet (as nullable first)
             migrationBuilder.Sql(@"
                 IF NOT EXISTS (
