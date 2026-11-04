@@ -119,7 +119,7 @@
    ```bash
    dotnet run
    ```
-   On startup the app applies pending migrations, creates the roles, and seeds the league fixtures. In Development it also creates two demo accounts (`board@example.com` and `referee@example.com`, see `DbInitializer.cs` for the passwords).
+   On startup the app applies pending migrations and creates the roles. It seeds demo teams and fixtures once per league, and only for a league that has no teams yet, so existing data is never recreated or overwritten. Team coordinates are looked up in the background after startup (OpenStreetMap Nominatim, one request per second). In Development it also creates two demo accounts (`board@example.com` and `referee@example.com`, see `DbInitializer.cs` for the passwords).
 
 5. **Access the App:**
    Open your browser and navigate to `https://localhost:7082` or `http://localhost:5031` (check your `Properties/launchSettings.json`).

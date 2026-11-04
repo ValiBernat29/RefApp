@@ -83,23 +83,40 @@ public static class DbInitializer
         await SeedUserAsync(userManager, config, isDevelopment, "Referee", "Referee User",
             defaultEmail: "referee@example.com", defaultPassword: "Referee123!");
 
-        await SeedL4FixturesAsync(context);
-        await SeedL5AFixturesAsync(context);
-        await SeedL5BFixturesAsync(context);
-        await SeedL5CFixturesAsync(context);
+        // Demo fixtures are seeded once per league, only while that league has no teams.
+        // Re-running them on every boot would re-create matches the Board deleted or moved
+        // and reset dates the Board edited. Team coordinates are filled in later by
+        // TeamGeocodingBackgroundService, so startup never waits on Nominatim.
+        var seeded = false;
+        seeded |= await SeedLeagueIfEmptyAsync(context, League.L4, SeedL4FixturesAsync);
+        seeded |= await SeedLeagueIfEmptyAsync(context, League.L5A, SeedL5AFixturesAsync);
+        seeded |= await SeedLeagueIfEmptyAsync(context, League.L5B, SeedL5BFixturesAsync);
+        seeded |= await SeedLeagueIfEmptyAsync(context, League.L5C, SeedL5CFixturesAsync);
 
-        // Sync all match locations to the home team's City (set by the board)
-        var allMatches = await context.Matches.Include(m => m.HomeTeam).ToListAsync();
-        foreach (var m in allMatches)
+        if (seeded)
         {
-            var correctLoc = m.HomeTeam?.City ?? m.HomeTeam?.Name ?? m.Location;
-            if (m.Location != correctLoc)
-                m.Location = correctLoc;
+            // Freshly seeded matches take their location from the home team's city.
+            // From here on, MatchesController and TeamsController keep Location in sync.
+            var allMatches = await context.Matches.Include(m => m.HomeTeam).ToListAsync();
+            foreach (var m in allMatches)
+            {
+                var correctLoc = m.HomeTeam?.City ?? m.HomeTeam?.Name ?? m.Location;
+                if (m.Location != correctLoc)
+                    m.Location = correctLoc;
+            }
+            await context.SaveChangesAsync();
         }
-        await context.SaveChangesAsync();
+    }
 
-        // Geocode any teams that have a City but no coordinates yet
-        await GeocodeTeamsWithMissingCoordsAsync(context, services);
+    /// <summary>Runs <paramref name="seed"/> only if the league has no teams. Returns true if it ran.</summary>
+    private static async Task<bool> SeedLeagueIfEmptyAsync(
+        ApplicationDbContext context, League league, Func<ApplicationDbContext, Task> seed)
+    {
+        if (await context.Teams.AnyAsync(t => t.League == league))
+            return false;
+
+        await seed(context);
+        return true;
     }
 
     private static async Task SeedUserAsync(
@@ -144,36 +161,6 @@ public static class DbInitializer
             "Team United Sânpaul" => "Sânpaul",
             _ => homeTeam.Split(' ').Length > 1 ? homeTeam.Split(' ')[1] : homeTeam
         };
-    }
-
-    /// <summary>
-    /// For every Team that has a City but Latitude/Longitude still null, call Nominatim once
-    /// to populate the coordinates. Runs at startup but skips already-geocoded teams.
-    /// </summary>
-    private static async Task GeocodeTeamsWithMissingCoordsAsync(
-        ApplicationDbContext context, IServiceProvider services)
-    {
-        var geocoding = services.GetService<RefApp.Services.GeocodingService>();
-        if (geocoding == null) return;
-
-        var teamsToGeocode = await context.Teams
-            .Where(t => !string.IsNullOrEmpty(t.City) && t.Latitude == null)
-            .ToListAsync();
-
-        foreach (var team in teamsToGeocode)
-        {
-            var coords = await geocoding.GeocodeAsync(team.City!);
-            if (coords.HasValue)
-            {
-                team.Latitude  = coords.Value.Lat;
-                team.Longitude = coords.Value.Lon;
-            }
-            // Nominatim rate limit: max 1 req/sec
-            await Task.Delay(1100);
-        }
-
-        if (teamsToGeocode.Any())
-            await context.SaveChangesAsync();
     }
 
     private static async Task SeedL4FixturesAsync(ApplicationDbContext context)
