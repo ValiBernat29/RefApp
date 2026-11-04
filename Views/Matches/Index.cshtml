@@ -132,7 +132,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <a asp-controller="Matches" asp-action="Assign" asp-route-id="@m.Id"
+                                    <a href="/app/matches/@m.Id/assign"
                                        class="btn-assign text-white px-4 py-1.5 rounded-lg text-sm font-medium">Assign Refs</a>
                                     <a asp-controller="Matches" asp-action="EditMatch" asp-route-id="@m.Id"
                                        class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>

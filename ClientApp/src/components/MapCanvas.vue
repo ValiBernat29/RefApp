@@ -2,7 +2,7 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ARAD_CENTER } from '../routing.js';
+import { ARAD_CENTER } from '../mapGeometry.js';
 
 const props = defineProps({
   referees: { type: Array, required: true },

@@ -12,7 +12,8 @@
     "@turf/helpers": "^7.4.0",
     "@turf/nearest-point-on-line": "^7.4.0",
     "leaflet": "^1.9.4",
-    "vue": "^3.5.44"
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.11",

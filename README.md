@@ -85,8 +85,8 @@
 - **Backend**: C# / ASP.NET Core 8 MVC
 - **Database**: Entity Framework Core. SQLite in Development, SQL Server (Azure) in production
 - **Authentication**: ASP.NET Core Identity, with `Board` and `Referee` roles
-- **Frontend**: Razor views, plus **Vue 3** (Vite) for the interactive pages (route map and referee assignment), styled with **Tailwind CSS v3**
-- **Architecture**: Service-oriented (`AssignmentService`, `RefereeScoringService`, `SmartAllocationEngine`, `GeocodingService`). Vue pages talk to JSON endpoints on the same origin and reuse the Identity cookie and antiforgery token.
+- **Frontend**: a **Vue 3** single-page app (Vite, Vue Router, Tailwind CSS v3) served by the same ASP.NET project at `/app`. It is being migrated page by page: Teams, referee assignment and the route map are Vue pages, the rest are still Razor views that open as normal page loads. Login, register and account management stay as the built-in ASP.NET Identity Razor pages.
+- **Architecture**: Service-oriented (`AssignmentService`, `RefereeScoringService`, `SmartAllocationEngine`, `GeocodingService`). The Vue app talks to JSON endpoints under `/api` on the same origin and reuses the Identity cookie and antiforgery token. `/api` returns 401/403 instead of redirecting to the login page.
 
 ## 🚀 Getting Started
 
@@ -146,8 +146,10 @@ Pushing to `main` runs `.github/workflows/main_refapp.yml`, which builds the Vue
 ## 📁 Project Structure
 
 - `Controllers/` - MVC controllers. Board-only controllers inherit `BoardControllerBase` (which requires the `Board` role):
-  - `BoardController` (`/Board`, dashboard), `MatchesController`, `TeamsController`, `UsersController`, `UnavailabilityController`, `AllocationController`, `RouteMapController`
-  - `MatchAssignmentApiController` - JSON API behind the Vue assign page (`api/board/matches/{id}/assignment`)
+  - `BoardController` (`/Board`, dashboard), `MatchesController`, `UsersController`, `UnavailabilityController`, `AllocationController` - Razor pages, still to be migrated to the Vue app
+  - `SpaController` - serves the Vue app shell for every URL under `/app`
+  - `LegacyRedirectController` - sends old Razor URLs (such as `/Teams`) to their Vue equivalents
+  - `Api/` - the JSON API for the Vue app (teams, route map, match assignment, lookups, `/api/me`). Board endpoints derive from `BoardApiControllerBase`, which requires the `Board` role and validates the antiforgery header.
   - `RefereeController` - the referee's own area
 - `Models/` - Entity classes and database schema definitions.
 - `ViewModels/` - Data transfer objects optimized for specific Views.
@@ -159,6 +161,7 @@ Pushing to `main` runs `.github/workflows/main_refapp.yml`, which builds the Vue
   - `GeocodingService.cs` - Nominatim geocoding and distance calculations.
 - `Data/` - EF Core `DbContext` and seeding logic (`DbInitializer`).
 - `ClientApp/` - Vue 3 + Vite + Tailwind source. `npm run build` writes to `wwwroot/dist`.
+  - `src/api/` - the only place that calls the server; `src/pages/` - one component per screen; `src/router.js` - routes and role guards; `src/legacy.js` - URLs of pages not yet migrated.
 - `wwwroot/` - Static files. `wwwroot/dist` is generated and git-ignored.
 
 ---

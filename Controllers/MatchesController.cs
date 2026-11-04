@@ -290,14 +290,7 @@ public class MatchesController : BoardControllerBase
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Hosts the Vue assign page. Data comes from <see cref="MatchAssignmentApiController"/>.</summary>
+    /// <summary>The assign screen is a page of the Vue app; keep the old URL working.</summary>
     [HttpGet]
-    public async Task<IActionResult> Assign(int id, CancellationToken cancellationToken)
-    {
-        if (!await _context.Matches.AnyAsync(m => m.Id == id, cancellationToken))
-            return NotFound();
-
-        ViewBag.MatchId = id;
-        return View();
-    }
+    public IActionResult Assign(int id) => Redirect($"/app/matches/{id}/assign");
 }

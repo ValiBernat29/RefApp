@@ -1,10 +1,12 @@
 <script setup>
 import { ref, shallowRef, reactive, computed, watch, nextTick, onMounted } from 'vue';
-import MapCanvas from './components/MapCanvas.vue';
-import SlotCard from './components/SlotCard.vue';
-import RefereeCard from './components/RefereeCard.vue';
-import { fetchMapData, saveMapAssignment } from './api.js';
-import { ARAD_CENTER, geocodeCity, fetchRoute, computeCoverage } from './routing.js';
+import MapCanvas from '../components/MapCanvas.vue';
+import SlotCard from '../components/SlotCard.vue';
+import RefereeCard from '../components/RefereeCard.vue';
+import { fetchRouteMapData } from '../api/routeMap.js';
+import { saveAssignment } from '../api/assignments.js';
+import { LEGACY } from '../legacy.js';
+import { ARAD_CENTER, geocodeCity, fetchRoute, computeCoverage } from '../mapGeometry.js';
 
 const SLOTS = [
   { key: 'main', label: 'Main Referee', short: 'Main', kind: 'main' },
@@ -164,27 +166,27 @@ async function save() {
   if (!m) return;
   saving.value = true;
   const payload = {
-    matchId: m.id,
     mainRefereeId: slots.main,
     assistant1Id: slots.asst1,
     assistant2Id: slots.asst2,
   };
-  const result = await saveMapAssignment(payload);
-  saving.value = false;
-  if (result.ok) {
+  try {
+    await saveAssignment(m.id, payload);
     setMessage('Saved!', 'ok');
     m.mainRefereeId = payload.mainRefereeId;
     m.assistant1Id = payload.assistant1Id;
     m.assistant2Id = payload.assistant2Id;
-  } else {
-    setMessage(result.error, 'err');
+  } catch (e) {
+    setMessage(e.message, 'err');
+  } finally {
+    saving.value = false;
   }
 }
 
 // ── Load ───────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    const data = await fetchMapData();
+    const data = await fetchRouteMapData();
     referees.value = data.referees;
     matches.value = data.matches;
   } catch (e) {
@@ -200,7 +202,7 @@ onMounted(async () => {
     <!-- Side panel -->
     <aside class="flex w-[370px] shrink-0 flex-col overflow-hidden border-r border-slate-700 bg-slate-800">
       <header class="bg-gradient-to-br from-sky-500 to-indigo-500 px-[18px] py-3.5">
-        <a href="/Board" class="text-xs text-white/80 hover:text-white">&larr; Dashboard</a>
+        <a :href="LEGACY.dashboard" class="text-xs text-white/80 hover:text-white">&larr; Dashboard</a>
         <h1 class="text-[15px] font-bold text-white">Route Map</h1>
         <span class="text-[11px] text-white/70">Arad County &middot; Referee Locations</span>
       </header>

@@ -10,15 +10,12 @@ export default defineConfig({
     emptyOutDir: true,
     cssCodeSplit: false,
     rollupOptions: {
-      // One entry per server-rendered page that hosts a Vue app.
-      input: {
-        'referee-map': 'src/main.js',
-        assign: 'src/assign-main.js',
-      },
+      // A single entry: the Vue single-page app that SpaController serves at /app.
+      input: { app: 'src/main.js' },
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: 'chunks/[name]-[hash].js',
-        // All pages share one stylesheet (cssCodeSplit is off).
+        // One stylesheet for the whole app (cssCodeSplit is off).
         assetFileNames: (info) => {
           const name = info.names?.[0] ?? info.name ?? '';
           return name.endsWith('.css') ? 'app[extname]' : 'assets/[name]-[hash][extname]';

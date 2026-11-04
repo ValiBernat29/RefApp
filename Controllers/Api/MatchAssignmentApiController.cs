@@ -1,14 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RefApp.Services;
 
-namespace RefApp.Controllers;
+namespace RefApp.Controllers.Api;
 
 /// <summary>JSON endpoints behind the Vue assign page.</summary>
-[Authorize(Roles = "Board")]
-[ApiController]
 [Route("api/board/matches/{id:int}/assignment")]
-public class MatchAssignmentApiController : ControllerBase
+public class MatchAssignmentApiController : BoardApiControllerBase
 {
     private readonly AssignmentService _assignments;
 
@@ -71,7 +68,6 @@ public class MatchAssignmentApiController : ControllerBase
 
     /// <summary>Validates and saves the three slots for the match.</summary>
     [HttpPut]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Put(int id, [FromBody] SaveAssignmentRequest request, CancellationToken ct)
     {
         var match = await _assignments.FindMatchAsync(id, ct);
