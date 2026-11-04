@@ -52,6 +52,7 @@ builder.Services.AddHttpClient("Nominatim", client =>
 });
 builder.Services.AddScoped<GeocodingService>();
 builder.Services.AddScoped<RefereeScoringService>();
+builder.Services.AddScoped<AssignmentService>();
 builder.Services.AddScoped<ISmartAllocationEngine, SmartAllocationEngine>();
 
 var app = builder.Build();

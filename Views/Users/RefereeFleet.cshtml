@@ -14,7 +14,7 @@
             <nav class="text-sm text-gray-400 mt-0.5">
                 <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
                 <span class="mx-1">•</span>
-                <a asp-controller="Board" asp-action="Users" class="hover:text-gray-600">Users</a>
+                <a asp-controller="Users" asp-action="Index" class="hover:text-gray-600">Users</a>
                 <span class="mx-1">•</span><span>Fleet</span>
             </nav>
         </div>
@@ -159,7 +159,7 @@
             setCarStatus(id, !currentHasCar);
 
             try {
-                const response = await fetch('/Board/ToggleCar', {
+                const response = await fetch('/Users/ToggleCar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',

@@ -1,22 +1,23 @@
 @model RefApp.ViewModels.CreateMatchViewModel
 @{
-    ViewData["Title"] = "Create Match";
+    ViewData["Title"] = "Edit Match";
 }
 
 <main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Create Match</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Edit Match</h1>
         <nav class="text-sm text-gray-400 mt-0.5">
             <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
             <span class="mx-1">•</span>
-            <a asp-controller="Board" asp-action="UpcomingMatches" class="hover:text-gray-600">Matches</a>
-            <span class="mx-1">•</span><span>Create</span>
+            <a asp-controller="Matches" asp-action="Index" class="hover:text-gray-600">Matches</a>
+            <span class="mx-1">•</span><span>Edit</span>
         </nav>
     </div>
 
     <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
-        <form asp-action="CreateMatch" method="post" class="space-y-5">
+        <form asp-controller="Matches" asp-action="EditMatch" method="post" class="space-y-5">
+            <input type="hidden" asp-for="Id" />
             <div asp-validation-summary="ModelOnly" class="validation"></div>
 
             <div class="space-y-1.5">
@@ -70,11 +71,25 @@
 
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
-                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Create Match</button>
-                <a asp-action="UpcomingMatches"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Changes</button>
+                <a asp-controller="Matches" asp-action="Index"
                    class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
             </div>
         </form>
+
+        <!-- Delete section -->
+        <div class="mt-6 pt-5 border-t border-red-100">
+            <form asp-controller="Matches" asp-action="DeleteMatch" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Are you sure you want to permanently delete this match? All referee assignments will also be removed.');">
+                <button type="submit"
+                        class="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:border-red-400 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                    </svg>
+                    Delete Match
+                </button>
+            </form>
+        </div>
     </section>
 
 </main>
@@ -121,14 +136,7 @@
             }
 
             if (matchDateInput) {
-                if (!matchDateInput.value) {
-                    const d = new Date();
-                    d.setHours(d.getHours() + 1);
-                    d.setMinutes(0, 0, 0);
-                    matchDateInput.value = toLocalDateTimeValue(d);
-                } else {
-                    snapToHour();
-                }
+                snapToHour();
                 matchDateInput.addEventListener('change', snapToHour);
                 matchDateInput.addEventListener('blur', snapToHour);
             }

@@ -42,31 +42,31 @@
             @if (User.IsInRole("Board"))
             {
                 <a asp-controller="Board" asp-action="Index"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "index" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Home
                 </a>
-                <a asp-controller="Board" asp-action="UpcomingMatches"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && (action == "upcomingmatches" || action == "assign") ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                <a asp-controller="Matches" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "matches" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Matches
                 </a>
-                <a asp-controller="Board" asp-action="UnavailabilityRoster"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "unavailabilityroster" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                <a asp-controller="Unavailability" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "unavailability" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Unavailability
                 </a>
-                <a asp-controller="Board" asp-action="Users"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "users" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                <a asp-controller="Users" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "users" && action != "refereefleet" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Users
                 </a>
-                <a asp-controller="Board" asp-action="Teams"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "teams" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                <a asp-controller="Teams" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "teams" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Teams
                 </a>
-                <a asp-controller="Board" asp-action="AutoAllocate"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && (action == "autoallocate" || action == "autoallocateresult") ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                <a asp-controller="Allocation" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "allocation" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     Auto-Allocate
                 </a>
-                <a asp-controller="Board" asp-action="RefereeMap"
-                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "board" && action == "refereemap" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
+                <a asp-controller="RouteMap" asp-action="Index"
+                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors @(controller == "routemap" ? "bg-sky-50 text-sky-700" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50")">
                     🗺 Route Map
                 </a>
             }

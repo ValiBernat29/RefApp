@@ -15,16 +15,16 @@
             <nav class="text-sm text-gray-400 mt-0.5">
                 <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
                 <span class="mx-1">•</span>
-                <a asp-controller="Board" asp-action="AutoAllocate" class="hover:text-gray-600">Auto-Allocate</a>
+                <a asp-controller="Allocation" asp-action="Index" class="hover:text-gray-600">Auto-Allocate</a>
                 <span class="mx-1">•</span><span>Results</span>
             </nav>
         </div>
         <div class="flex items-center gap-3">
-            <a asp-action="AutoAllocate"
+            <a asp-controller="Allocation" asp-action="Index"
                class="action-btn-outline px-5 py-2.5 rounded-lg text-sm font-medium">
                ← Run Again
             </a>
-            <a asp-action="UpcomingMatches"
+            <a asp-controller="Matches" asp-action="Index"
                class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium">
                View All Matches →
             </a>

@@ -10,13 +10,13 @@
         <nav class="text-sm text-gray-400 mt-0.5">
             <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
             <span class="mx-1">•</span>
-            <a asp-controller="Board" asp-action="Users" class="hover:text-gray-600">Users</a>
+            <a asp-controller="Users" asp-action="Index" class="hover:text-gray-600">Users</a>
             <span class="mx-1">•</span><span>Edit</span>
         </nav>
     </div>
 
     <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
-        <form asp-action="EditUser" method="post" class="space-y-5">
+        <form asp-controller="Users" asp-action="EditUser" method="post" class="space-y-5">
             <input type="hidden" asp-for="Id" />
             <div asp-validation-summary="All" class="alert alert-error" role="alert"></div>
 
@@ -93,7 +93,7 @@
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
                         class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Changes</button>
-                <a asp-action="Users"
+                <a asp-controller="Users" asp-action="Index"
                    class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
             </div>
         </form>

@@ -1,57 +1,64 @@
 @model RefApp.Models.Team
 @{
-    ViewData["Title"] = "Add Team";
+    ViewData["Title"] = "Edit Team";
 }
 
 <main class="max-w-[1440px] mx-auto p-8 space-y-6">
 
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Add Team</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Edit Team</h1>
         <nav class="text-sm text-gray-400 mt-0.5">
             <a asp-controller="Board" asp-action="Index" class="hover:text-gray-600">Dashboard</a>
             <span class="mx-1">•</span>
-            <a asp-controller="Board" asp-action="Teams" class="hover:text-gray-600">Teams</a>
-            <span class="mx-1">•</span><span>Create</span>
+            <a asp-controller="Teams" asp-action="Index" class="hover:text-gray-600">Teams</a>
+            <span class="mx-1">•</span><span>Edit</span>
         </nav>
     </div>
 
     <section class="bg-white rounded-xl card-shadow p-6 max-w-xl">
-        <form asp-action="CreateTeam" method="post" class="space-y-5">
-            <div asp-validation-summary="ModelOnly" class="validation"></div>
+        <form asp-controller="Teams" asp-action="EditTeam" method="post" class="space-y-5">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="All" class="validation"></div>
 
             <div class="space-y-1.5">
-                <label asp-for="Name" class="block text-sm font-medium text-gray-700"></label>
-                <input asp-for="Name" placeholder="Team name"
+                <label asp-for="Name" class="block text-sm font-medium text-gray-700">Team Name</label>
+                <input asp-for="Name"
                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
                 <span asp-validation-for="Name" class="validation"></span>
             </div>
 
             <div class="space-y-1.5">
-                <label asp-for="League" class="block text-sm font-medium text-gray-700"></label>
+                <label asp-for="League" class="block text-sm font-medium text-gray-700">League</label>
                 <select asp-for="League" asp-items="Html.GetEnumSelectList<RefApp.Models.League>()"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400"></select>
                 <span asp-validation-for="League" class="validation"></span>
             </div>
 
             <div class="space-y-1.5">
-                <label asp-for="PreferredMatchDay" class="block text-sm font-medium text-gray-700"></label>
+                <label asp-for="PreferredMatchDay" class="block text-sm font-medium text-gray-700">Preferred Match Day</label>
                 <select asp-for="PreferredMatchDay" asp-items="Html.GetEnumSelectList<DayOfWeek>()"
                         class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400"></select>
-                <p class="text-xs text-gray-400">e.g. Saturday for L4 teams, Sunday for most other leagues. You can still change individual match dates later.</p>
                 <span asp-validation-for="PreferredMatchDay" class="validation"></span>
+            </div>
+
+            <div class="space-y-1.5">
+                <label asp-for="City" class="block text-sm font-medium text-gray-700">Ground City / Village</label>
+                <input asp-for="City"
+                       list="arad-localities"
+                       placeholder="Type to search..."
+                       autocomplete="off"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400" />
+                <partial name="_CityDatalist" />
+                <span asp-validation-for="City" class="validation"></span>
             </div>
 
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
-                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Team</button>
-                <a asp-action="Teams"
+                        class="btn-assign text-white px-6 py-2.5 rounded-lg text-sm font-medium">Save Changes</button>
+                <a asp-controller="Teams" asp-action="Index"
                    class="action-btn-outline px-6 py-2.5 rounded-lg text-sm font-medium">Cancel</a>
             </div>
         </form>
     </section>
 
 </main>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

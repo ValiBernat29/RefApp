@@ -47,7 +47,7 @@
         <section class="bg-white rounded-xl card-shadow overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                 <h2 class="text-xl font-bold text-gray-800">Pending Assignments</h2>
-                <a asp-controller="Board" asp-action="UpcomingMatches"
+                <a asp-controller="Matches" asp-action="Index"
                    class="text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors">View All →</a>
             </div>
             <div class="overflow-x-auto">
@@ -73,7 +73,7 @@
                                     <td class="px-6 py-4">@m.MatchDate.ToString("ddd, MMM d, yyyy · HH:mm")</td>
                                     <td class="px-6 py-4">@m.Location</td>
                                     <td class="px-6 py-4">
-                                        <a asp-controller="Board" asp-action="Assign" asp-route-id="@m.Id"
+                                        <a asp-controller="Matches" asp-action="Assign" asp-route-id="@m.Id"
                                            class="btn-assign text-white px-6 py-1.5 rounded-lg text-sm font-medium inline-block">Assign</a>
                                     </td>
                                 </tr>
@@ -85,7 +85,7 @@
                 {
                     <div class="px-6 py-10 text-center text-gray-400 text-sm">
                         No upcoming matches.
-                        <a asp-controller="Board" asp-action="CreateMatch" class="text-sky-600 hover:underline ml-1">Create one</a>.
+                        <a asp-controller="Matches" asp-action="CreateMatch" class="text-sky-600 hover:underline ml-1">Create one</a>.
                     </div>
                 }
             </div>
@@ -95,7 +95,7 @@
         <section class="bg-white rounded-xl card-shadow overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                 <h2 class="text-xl font-bold text-gray-800">Unavailability Roster</h2>
-                <a asp-controller="Board" asp-action="UnavailabilityRoster"
+                <a asp-controller="Unavailability" asp-action="Index"
                    class="text-sm font-medium text-sky-600 hover:text-sky-700 transition-colors">View All →</a>
             </div>
             <div class="p-6 space-y-1">
@@ -140,7 +140,7 @@
         <section class="bg-white rounded-xl card-shadow p-6">
             <h2 class="text-xl font-bold text-gray-800 mb-6">Quick Actions</h2>
             <div class="flex flex-col space-y-4">
-                <a asp-action="CreateMatch"
+                <a asp-controller="Matches" asp-action="CreateMatch"
                    class="action-btn-outline w-full py-4 px-4 rounded-xl flex items-center space-x-4 text-left group">
                     <div class="p-1 rounded-md bg-gray-50 group-hover:bg-white border border-gray-100">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@
                     <span class="font-medium text-gray-600">Create Match</span>
                 </a>
 
-                <a asp-action="Users"
+                <a asp-controller="Users" asp-action="Index"
                    class="action-btn-outline w-full py-4 px-4 rounded-xl flex items-center space-x-4 text-left group">
                     <div class="p-1 rounded-md bg-gray-50 group-hover:bg-white border border-gray-100">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@
                     <span class="font-medium text-gray-600">Manage Users</span>
                 </a>
 
-                <a asp-action="Teams"
+                <a asp-controller="Teams" asp-action="Index"
                    class="action-btn-outline w-full py-4 px-4 rounded-xl flex items-center space-x-4 text-left group">
                     <div class="p-1 rounded-md bg-gray-50 group-hover:bg-white border border-gray-100">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@
                     <span class="font-medium text-gray-600">Manage Teams</span>
                 </a>
 
-                <a asp-action="AutoAllocate"
+                <a asp-controller="Allocation" asp-action="Index"
                    class="w-full py-4 px-4 rounded-xl flex items-center space-x-4 text-left group btn-assign text-white">
                     <div class="p-1 rounded-md bg-white/20 group-hover:bg-white/30 border border-white/20">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

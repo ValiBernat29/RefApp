@@ -14,7 +14,7 @@
                 <span class="mx-1">•</span><span>Teams</span>
             </nav>
         </div>
-        <a asp-action="CreateTeam"
+        <a asp-controller="Teams" asp-action="CreateTeam"
            class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center space-x-2">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -48,9 +48,9 @@
                             <td class="px-6 py-4 text-sm">@t.PreferredMatchDay</td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <a asp-action="EditTeam" asp-route-id="@t.Id"
+                                    <a asp-controller="Teams" asp-action="EditTeam" asp-route-id="@t.Id"
                                        class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>
-                                    <form asp-action="DeleteTeam" asp-route-id="@t.Id" method="post" class="inline"
+                                    <form asp-controller="Teams" asp-action="DeleteTeam" asp-route-id="@t.Id" method="post" class="inline"
                                           onsubmit="return confirm('Are you sure you want to permanently delete @t.Name?');">
                                         <button type="submit"
                                                 class="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">Delete</button>

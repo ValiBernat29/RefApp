@@ -39,7 +39,7 @@
                 </div>
             </div>
 
-            <form method="post" asp-action="AutoAllocate" class="space-y-5">
+            <form method="post" asp-controller="Allocation" asp-action="Index" class="space-y-5">
                 @Html.AntiForgeryToken()
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">

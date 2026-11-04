@@ -14,7 +14,7 @@
                 <span class="mx-1">•</span><span>Matches</span>
             </nav>
         </div>
-        <a asp-action="CreateMatch"
+        <a asp-controller="Matches" asp-action="CreateMatch"
            class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center space-x-2">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -30,7 +30,7 @@
 
     <!-- Filter Panel -->
     <section class="bg-white rounded-xl card-shadow p-6">
-        <form method="get" asp-action="UpcomingMatches" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <form method="get" asp-controller="Matches" asp-action="Index" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             <div class="space-y-1.5">
                 <label for="league" class="block text-sm font-medium text-gray-600">League</label>
                 <select id="league" name="league"
@@ -62,7 +62,7 @@
             <div class="flex items-end gap-2">
                 <button type="submit"
                         class="btn-assign text-white px-5 py-2.5 rounded-lg text-sm font-medium flex-1">Filter</button>
-                <a asp-action="UpcomingMatches"
+                <a asp-controller="Matches" asp-action="Index"
                    class="action-btn-outline px-5 py-2.5 rounded-lg text-sm font-medium">Clear</a>
             </div>
         </form>
@@ -132,9 +132,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <a asp-action="Assign" asp-route-id="@m.Id"
+                                    <a asp-controller="Matches" asp-action="Assign" asp-route-id="@m.Id"
                                        class="btn-assign text-white px-4 py-1.5 rounded-lg text-sm font-medium">Assign Refs</a>
-                                    <a asp-action="EditMatch" asp-route-id="@m.Id"
+                                    <a asp-controller="Matches" asp-action="EditMatch" asp-route-id="@m.Id"
                                        class="action-btn-outline px-4 py-1.5 rounded-lg text-sm font-medium">Edit</a>
                                 </div>
                             </td>
