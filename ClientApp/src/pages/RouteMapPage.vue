@@ -5,7 +5,6 @@ import SlotCard from '../components/SlotCard.vue';
 import RefereeCard from '../components/RefereeCard.vue';
 import { fetchRouteMapData } from '../api/routeMap.js';
 import { saveAssignment } from '../api/assignments.js';
-import { LEGACY } from '../legacy.js';
 import { ARAD_CENTER, geocodeCity, fetchRoute, computeCoverage } from '../mapGeometry.js';
 
 const SLOTS = [
@@ -202,7 +201,7 @@ onMounted(async () => {
     <!-- Side panel -->
     <aside class="flex w-[370px] shrink-0 flex-col overflow-hidden border-r border-slate-700 bg-slate-800">
       <header class="bg-gradient-to-br from-sky-500 to-indigo-500 px-[18px] py-3.5">
-        <a :href="LEGACY.dashboard" class="text-xs text-white/80 hover:text-white">&larr; Dashboard</a>
+        <RouterLink to="/dashboard" class="text-xs text-white/80 hover:text-white">&larr; Dashboard</RouterLink>
         <h1 class="text-[15px] font-bold text-white">Route Map</h1>
         <span class="text-[11px] text-white/70">Arad County &middot; Referee Locations</span>
       </header>

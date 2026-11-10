@@ -4,7 +4,6 @@ import PageShell from '../components/ui/PageShell.vue';
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import { listTeams, deleteTeam } from '../api/teams.js';
 import { showFlash } from '../flash.js';
-import { LEGACY } from '../legacy.js';
 
 const teams = ref([]);
 const loading = ref(true);
@@ -58,7 +57,7 @@ onMounted(load);
 </script>
 
 <template>
-  <PageShell title="Teams" :breadcrumbs="[{ text: 'Dashboard', href: LEGACY.dashboard }, { text: 'Teams' }]">
+  <PageShell title="Teams" :breadcrumbs="[{ text: 'Dashboard', to: '/dashboard' }, { text: 'Teams' }]">
     <template #actions>
       <RouterLink
         to="/teams/new"

@@ -5,16 +5,13 @@ namespace RefApp.Controllers;
 
 public class HomeController : Controller
 {
+    /// <summary>Signed-in users go to the Vue app (which picks their dashboard); everyone else to the Identity login page.</summary>
     [AllowAnonymous]
     public IActionResult Index()
     {
         if (User.Identity?.IsAuthenticated == true)
-        {
-            if (User.IsInRole("Board")) return RedirectToAction("Index", "Board");
-            if (User.IsInRole("Referee")) return RedirectToAction("Index", "Referee");
-        }
+            return Redirect("/app");
 
-        // Send them straight to the official Identity Login page we just fixed!
         return LocalRedirect("/Identity/Account/Login");
     }
 
@@ -24,4 +21,3 @@ public class HomeController : Controller
         return View();
     }
 }
-

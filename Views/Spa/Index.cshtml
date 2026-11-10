@@ -1,7 +1,9 @@
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject RefApp.Services.ViteAssets Vite
 @{
     Layout = null;
     var afToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var entry = Vite.GetEntry();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -14,11 +16,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/dist/app.css" asp-append-version="true" />
+    @* File names carry a content hash, so no ?v= query: the URL must match what the lazy chunks import. *@
+    @foreach (var style in entry.Styles)
+    {
+        <link rel="stylesheet" href="~/@style" />
+    }
 </head>
 <body>
     <div id="app"></div>
     <noscript>RefApp needs JavaScript enabled.</noscript>
-    <script type="module" src="~/dist/app.js" asp-append-version="true"></script>
+    <script type="module" src="~/@entry.Script"></script>
 </body>
 </html>

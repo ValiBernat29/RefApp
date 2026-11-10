@@ -5,21 +5,22 @@ import vue from '@vitejs/plugin-vue';
 // reference them directly (cache-busting is handled by asp-append-version).
 export default defineConfig({
   plugins: [vue()],
+  // The built files are served from /dist, so lazy-loaded page chunks must be requested from there.
+  base: '/dist/',
   build: {
     outDir: '../wwwroot/dist',
     emptyOutDir: true,
-    cssCodeSplit: false,
+    // Written to dist/manifest.json. ViteAssets (C#) reads it to find the hashed entry file names.
+    manifest: 'manifest.json',
     rollupOptions: {
       // A single entry: the Vue single-page app that SpaController serves at /app.
       input: { app: 'src/main.js' },
       output: {
-        entryFileNames: '[name].js',
+        // Content-hashed names: a file's URL changes whenever its content does, so browsers never serve stale code.
+        // The entry's URL must be exactly the one the page loads, or the browser would run the app twice.
+        entryFileNames: '[name]-[hash].js',
         chunkFileNames: 'chunks/[name]-[hash].js',
-        // One stylesheet for the whole app (cssCodeSplit is off).
-        assetFileNames: (info) => {
-          const name = info.names?.[0] ?? info.name ?? '';
-          return name.endsWith('.css') ? 'app[extname]' : 'assets/[name]-[hash][extname]';
-        },
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },

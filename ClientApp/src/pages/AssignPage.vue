@@ -1,11 +1,15 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import PageShell from '../components/ui/PageShell.vue';
 import SlotPicker from '../components/SlotPicker.vue';
 import { fetchAssignment, saveAssignment } from '../api/assignments.js';
-import { LEGACY } from '../legacy.js';
+import { showFlash } from '../flash.js';
+import { btnOutline } from '../components/ui/classes.js';
 
 const props = defineProps({ matchId: { type: Number, required: true } });
+
+const router = useRouter();
 
 const SLOTS = [
   { key: 'main', field: 'mainRefereeId', label: 'Main Referee' },
@@ -58,8 +62,8 @@ async function save(force = false) {
       assistant1Id: chosen.assistant1,
       assistant2Id: chosen.assistant2,
     });
-    // The matches list is still a Razor page, so this is a normal page load.
-    window.location.assign(LEGACY.matches);
+    showFlash('Referees assigned successfully.');
+    router.push('/matches');
   } catch (e) {
     saveError.value = e.message;
     saving.value = false;
@@ -86,8 +90,8 @@ onMounted(async () => {
   <PageShell
     title="Assign Referees"
     :breadcrumbs="[
-      { text: 'Dashboard', href: LEGACY.dashboard },
-      { text: 'Matches', href: LEGACY.matches },
+      { text: 'Dashboard', to: '/dashboard' },
+      { text: 'Matches', to: '/matches' },
       { text: 'Assign' },
     ]"
   >
@@ -98,7 +102,7 @@ onMounted(async () => {
 
     <div v-else-if="loadError" class="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700" role="alert">
       {{ loadError }}
-      <a :href="LEGACY.matches" class="ml-2 font-medium underline">Back to matches</a>
+      <RouterLink to="/matches" class="ml-2 font-medium underline">Back to matches</RouterLink>
     </div>
 
     <div v-else class="space-y-6">
@@ -158,12 +162,7 @@ onMounted(async () => {
           >
             {{ saving ? 'Saving...' : 'Save Assignments' }}
           </button>
-          <a
-            :href="LEGACY.matches"
-            class="rounded-lg border border-[#91b5bf] px-6 py-2.5 text-sm font-medium text-[#6193a0] transition-all hover:border-[#6193a0] hover:bg-[#f0f6f8]"
-          >
-            Back to Matches
-          </a>
+          <RouterLink to="/matches" :class="btnOutline">Back to Matches</RouterLink>
         </div>
       </div>
     </div>

@@ -16,5 +16,7 @@ public class LookupsApiController : ControllerBase
         leagues = Enum.GetNames<League>(),
         matchDays = Enum.GetNames<DayOfWeek>(),
         cities = AradLocalities.All,
+        ranks = Enum.GetNames<RefereeRank>(),
+        preferredRoles = Enum.GetNames<RefereePreferredRole>(),
     });
 }

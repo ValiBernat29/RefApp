@@ -5,7 +5,6 @@ import PageShell from '../components/ui/PageShell.vue';
 import { getTeam, createTeam, updateTeam } from '../api/teams.js';
 import { getLookups } from '../api/lookups.js';
 import { showFlash } from '../flash.js';
-import { LEGACY } from '../legacy.js';
 
 // Present when editing (/teams/:id/edit), absent when creating (/teams/new).
 const props = defineProps({ id: { type: Number, default: null } });
@@ -87,7 +86,7 @@ onMounted(async () => {
   <PageShell
     :title="isEdit ? 'Edit Team' : 'Add New Team'"
     :breadcrumbs="[
-      { text: 'Dashboard', href: LEGACY.dashboard },
+      { text: 'Dashboard', to: '/dashboard' },
       { text: 'Teams', to: '/teams' },
       { text: isEdit ? 'Edit' : 'New' },
     ]"

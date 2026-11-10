@@ -73,6 +73,7 @@ builder.Services.AddHttpClient("Nominatim", client =>
 builder.Services.AddScoped<GeocodingService>();
 builder.Services.AddScoped<RefereeScoringService>();
 builder.Services.AddScoped<AssignmentService>();
+builder.Services.AddSingleton<ViteAssets>();
 builder.Services.AddHostedService<TeamGeocodingBackgroundService>();
 builder.Services.AddScoped<ISmartAllocationEngine, SmartAllocationEngine>();
 
